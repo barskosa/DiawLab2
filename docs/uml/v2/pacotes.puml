@@ -1,0 +1,73 @@
+@startuml
+!pragma layout smetana
+title Rota — pacotes e arquitetura MVC implementados (v2)
+skinparam shadowing false
+skinparam backgroundColor #FAFBFC
+
+package "Construção dinâmica de páginas web\nfrontend/src — View" as Front {
+  component "App.jsx" as App
+  component "forms.jsx / components.jsx" as Forms
+  component "api.js" as Api
+  App --> Forms
+  App --> Api
+  Forms --> Api
+}
+package "Gestão de pedidos e contratos\nbackend/src/main/java/br/com/rota" as Back {
+  package controller {
+    component "AuthController" as AuthController
+    component "ClientController" as ClientController
+    component "VehicleController" as VehicleController
+    component "OrderController" as OrderController
+    component "ContractController" as ContractController
+  }
+  package service {
+    component "AuthService" as AuthService
+    component "RentalService" as RentalService
+  }
+  package model {
+    component "AppUser / Employment" as Users
+    component "Vehicle / RentalOrder / RentalContract" as Models
+    component "Role / OrderStatus" as Enums
+  }
+  package repository {
+    component "UserRepository" as UserRepository
+    component "VehicleRepository / OrderRepository / ContractRepository" as Repositories
+  }
+  package dto {
+    component "ApiDtos" as Dtos
+  }
+  package config {
+    component "SecurityConfig" as Security
+  }
+  package exception {
+    component "Erros de domínio e tratamento HTTP" as Errors
+  }
+}
+database "Supabase PostgreSQL\nesquema rental" as Db
+component "Flyway\ndb/migration" as Flyway
+
+Api --> controller : HTTP JSON + sessão + CSRF
+Security ..> controller : autenticação e proteção
+controller ..> Dtos
+AuthController --> AuthService
+ClientController --> AuthService
+VehicleController --> RentalService
+OrderController --> RentalService
+ContractController --> RentalService
+service ..> Dtos
+service --> model
+service --> repository
+service ..> Errors
+repository --> model
+repository --> Db : JDBC / SSL
+Flyway --> Db : migrações versionadas
+
+note bottom of Front
+  React renderiza páginas e formulários.
+  Navegador não acessa PostgreSQL.
+end note
+note bottom of service
+  Validação, autorização por papel/titular,
+  transações, cálculo e estados de pedidos.
+end note
+@enduml
