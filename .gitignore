@@ -1,0 +1,24 @@
+# Credenciais locais
+.env
+.env.*
+!.env.example
+!**/.env.example
+*.pem
+*.key
+
+# Dependências e artefatos
+node_modules/
+dist/
+target/
+.logs/
+coverage/
+test-results/
+playwright-report/
+
+# Editores e sistema operacional
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+*.log

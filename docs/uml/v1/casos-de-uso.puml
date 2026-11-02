@@ -1,0 +1,63 @@
+@startuml
+!pragma layout smetana
+title Rota — casos de uso conceituais (v1)
+left to right direction
+skinparam shadowing false
+skinparam backgroundColor #FAFBFC
+skinparam actorStyle awesome
+
+actor Visitante
+actor "Usuário cadastrado" as User
+actor Cliente
+actor Agente
+actor Empresa
+actor Banco
+Cliente --|> User
+Agente --|> User
+Empresa --|> Agente
+Banco --|> Agente
+
+rectangle "Sistema de Aluguel de Carros" {
+  usecase "Cadastrar-se" as Register
+  usecase "Autenticar-se" as Login
+  usecase "Manter cadastro de cliente" as Profile
+  usecase "Criar pedido" as Create
+  usecase "Consultar pedidos e status" as Read
+  usecase "Modificar pedido" as Update
+  usecase "Cancelar pedido" as Cancel
+  usecase "Avaliar pedido financeiramente" as Review
+  usecase "Executar contrato aprovado" as Contract
+  usecase "Registrar propriedade" as Owner
+  usecase "Associar crédito bancário" as Credit
+  usecase "Consultar automóveis" as Vehicles
+}
+
+Visitante --> Register
+User --> Login
+User --> Vehicles
+Cliente --> Profile
+Cliente --> Create
+Cliente --> Read
+Cliente --> Update
+Cliente --> Cancel
+Agente --> Read
+Agente --> Update
+Agente --> Review
+Agente --> Contract
+Contract ..> Owner : <<include>>
+Credit ..> Contract : <<extend>>
+Banco --> Credit
+
+note right of Contract
+  Exige pedido aprovado.
+  Crédito é opcional.
+end note
+note bottom of Profile
+  RG, CPF, nome, endereço, profissão;
+  até 3 empregadores e rendimentos.
+end note
+note bottom of Vehicles
+  Recursos de negócio exigem
+  usuário cadastrado e autenticado.
+end note
+@enduml

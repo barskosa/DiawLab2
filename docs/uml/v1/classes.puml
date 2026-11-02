@@ -1,0 +1,73 @@
+@startuml
+!pragma layout smetana
+title Rota — modelo conceitual de classes (v1)
+skinparam shadowing false
+skinparam backgroundColor #FAFBFC
+hide circle
+
+abstract class Usuario {
+  identificador
+  usuario
+  senha
+  nome
+}
+class Cliente {
+  rg
+  cpf
+  endereco
+  profissao
+}
+abstract class Agente
+class Empresa
+class Banco
+class VinculoEmpregaticio {
+  entidadeEmpregadora
+  rendimento
+}
+class Automovel {
+  matricula
+  ano
+  marca
+  modelo
+  placa
+}
+class PedidoAluguel {
+  dataRetirada
+  dataDevolucao
+  valor
+  status
+  parecerFinanceiro
+}
+class ContratoAluguel {
+  dataExecucao
+}
+class ContratoCredito {
+  valor
+  taxaJuros
+  parcelas
+}
+
+Cliente --|> Usuario
+Agente --|> Usuario
+Empresa --|> Agente
+Banco --|> Agente
+Cliente "1" *-- "0..3" VinculoEmpregaticio
+Cliente "1" -- "0..*" PedidoAluguel : solicita
+Automovel "1" -- "0..*" PedidoAluguel : objeto
+Agente "0..1" -- "0..*" PedidoAluguel : avalia
+PedidoAluguel "1" -- "0..1" ContratoAluguel : origina após aprovação
+ContratoAluguel "1" *-- "0..1" ContratoCredito
+Banco "1" -- "0..*" ContratoCredito : concede
+Usuario "1" -- "0..*" Automovel : proprietário
+Usuario "1" -- "0..*" ContratoAluguel : propriedade no contrato
+
+note right of Usuario
+  Conceito de identidade comum.
+  A senha deve ser protegida
+  na implementação.
+end note
+note bottom of ContratoCredito
+  Modelo conceitual: não determina
+  ainda uma tabela independente.
+end note
+@enduml

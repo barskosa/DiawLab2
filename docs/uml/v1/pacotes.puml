@@ -1,0 +1,38 @@
+@startuml
+!pragma layout smetana
+title Rota — visão lógica conceitual (v1)
+skinparam shadowing false
+skinparam backgroundColor #FAFBFC
+
+actor "Clientes e agentes" as Users
+package "Construção dinâmica de páginas web" as Web {
+  component "Interface de cadastro e autenticação" as AuthView
+  component "Páginas de clientes, frota,\npedidos e contratos" as Views
+}
+package "Gestão de pedidos e contratos" as Management {
+  component "Autenticação e autorização" as Auth
+  component "Gestão de clientes" as Clients
+  component "Gestão de automóveis" as Vehicles
+  component "Pedidos e análise financeira" as Orders
+  component "Contratos e crédito" as Contracts
+  component "Persistência" as Persistence
+}
+database "Banco de dados" as Database
+
+Users --> Web
+Web --> Auth : Internet / HTTP
+Views --> Clients
+Views --> Vehicles
+Views --> Orders
+Views --> Contracts
+Clients --> Persistence
+Vehicles --> Persistence
+Orders --> Persistence
+Contracts --> Persistence
+Auth --> Persistence
+Persistence --> Database
+note bottom of Management
+  Dois subsistemas descritos no enunciado;
+  separação tecnológica detalhada na v2.
+end note
+@enduml
