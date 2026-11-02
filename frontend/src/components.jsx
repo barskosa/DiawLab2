@@ -212,7 +212,14 @@ export function Modal({ title, description, onClose, children, wide = false }) {
     dialog.showModal();
     return () => {
       dialog.close();
-      previous?.focus();
+      const destination =
+        previous instanceof HTMLElement &&
+        previous.isConnected &&
+        previous !== document.body &&
+        !previous.closest('dialog')
+          ? previous
+          : document.getElementById('main-content');
+      destination?.focus({ preventScroll: true });
     };
   }, []);
   return (

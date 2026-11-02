@@ -1142,6 +1142,7 @@ main#main-content {
   white-space: nowrap;
 }
 .table-scroll {
+  position: relative;
   overflow-x: auto;
   max-width: 100%;
   scrollbar-width: thin;

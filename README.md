@@ -224,9 +224,11 @@ As capturas abaixo mostram a aplicação conectada à API Java em um ambiente is
 
 | Login | Painel do cliente |
 | --- | --- |
-| ![Tela de login](docs/images/login.png) | ![Painel do cliente com pedido em análise](docs/images/dashboard.png) |
+| ![Tela de login](docs/images/login.png) | ![Painel do cliente com pedidos e contrato](docs/images/dashboard.png) |
 | Pedidos do agente | Contrato com crédito |
 | ![Pedidos e status de contratação](docs/images/pedidos.png) | ![Contrato com propriedade e crédito do banco](docs/images/contrato.png) |
+
+Veja também a [interface em uma tela de 320 px](docs/images/mobile.png).
 
 ## Testes
 
@@ -252,6 +254,8 @@ npm.cmd run build
 ```
 
 O build verifica o empacotamento da interface. O [roteiro de apresentação](docs/ROTEIRO-APRESENTACAO.md) também lista cenários de validação manual de autorização, cancelamento, dados obrigatórios e limite de rendimentos. Nenhuma porcentagem de cobertura ou validação de um Supabase externo é presumida nesta documentação.
+
+A verificação em Chromium também confirmou cadastro de banco e cliente, cadastro de automóvel, criação e edição de pedido, cancelamento, parecer financeiro e execução de contrato com crédito, usando a API real em ambiente isolado de testes. As cinco páginas do cliente foram verificadas em larguras de **320, 425, 768 e 1440 px**, sem rolagem horizontal no documento e sem erros JavaScript. Tabelas extensas mantêm rolagem dentro do próprio componente.
 
 ## Documentações utilizadas
 
