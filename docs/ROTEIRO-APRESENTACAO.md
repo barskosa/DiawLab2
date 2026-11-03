@@ -2,7 +2,7 @@
 
 ## Preparação
 
-1. Configure JDK 25 e o Supabase conforme [Configuração](CONFIGURACAO.md).
+1. Prepare JDK 25 e o Supabase conforme [Instalação e execução no README](../README.md#instalação-e-execução).
 2. Execute os testes do back-end e o build do front-end.
 3. Inicie a API e o React em dois terminais.
 4. Prepare dados de teste de uma empresa, um banco e dois clientes com documentos válidos distintos. Não use dados pessoais reais de terceiros.

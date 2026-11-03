@@ -14,6 +14,7 @@ Código da aplicação e documentação disponíveis neste repositório. Back-en
 
 - [Links úteis](#links-úteis)
 - [Sobre o projeto](#sobre-o-projeto)
+- [Atendimento ao enunciado](#atendimento-ao-enunciado)
 - [Funcionalidades principais](#funcionalidades-principais)
 - [Tecnologias utilizadas](#tecnologias-utilizadas)
 - [Arquitetura](#arquitetura)
@@ -31,7 +32,6 @@ Código da aplicação e documentação disponíveis neste repositório. Back-en
 ## Links úteis
 
 - [Repositório GitHub](https://github.com/barskosa/DiawLab2)
-- [Configuração de API e Supabase](docs/CONFIGURACAO.md)
 - [Requisitos e rastreabilidade](docs/REQUISITOS.md)
 - [Histórias de usuário e critérios de aceite](docs/HISTORIAS-USUARIO.md)
 - [Modelagem UML e comparação das versões](docs/MODELAGEM.md)
@@ -43,6 +43,26 @@ Código da aplicação e documentação disponíveis neste repositório. Back-en
 O Rota centraliza o processo de aluguel de automóveis: cadastro do contratante, solicitação de período e veículo, parecer financeiro de um agente e emissão de contrato quando aprovado. Clientes, empresas e bancos acessam o mesmo servidor pela aplicação React, com permissões verificadas pelo Spring Boot.
 
 O escopo segue o enunciado do Laboratório 02. As decisões complementares necessárias à implementação, como regras de datas e de transição de status, estão identificadas em [Requisitos](docs/REQUISITOS.md). Os modelos conceituais e os modelos correspondentes ao código estão preservados separadamente em `docs/uml/v1` e `docs/uml/v2`.
+
+## Atendimento ao enunciado
+
+O enunciado estabelece três critérios de avaliação: **adequação aos requisitos**, **alinhamento entre modelos e código** e **atualização dos modelos**. A tabela relaciona os entregáveis a evidências verificáveis no repositório.
+
+| Requisito ou entregável | Implementação e evidência |
+| --- | --- |
+| Java 25, Spring Boot 4.0.x e Maven | [pom.xml](backend/pom.xml), Maven Wrapper e API compilada com JDK 25 |
+| React + Vite, PostgreSQL/Supabase e MVC | [Front-end](frontend/package.json), [configuração JDBC e Flyway](backend/src/main/resources/application.properties) e [diagrama de pacotes MVC](docs/uml/v2/pacotes.svg); conexão real com Supabase validada |
+| Cadastro e login obrigatório para clientes e agentes | [AuthController](backend/src/main/java/br/com/rota/controller/AuthController.java), [SecurityConfig](backend/src/main/java/br/com/rota/config/SecurityConfig.java) e testes HTTP de sessão, credenciais e autorização |
+| CRUD de cliente e identificação completa | [ClientController](backend/src/main/java/br/com/rota/controller/ClientController.java) e [AuthService](backend/src/main/java/br/com/rota/service/AuthService.java); nome, CPF, RG, endereço, profissão e até três vínculos com empregador e rendimento |
+| Criar, consultar, modificar e cancelar pedidos; acompanhar status | [OrderController](backend/src/main/java/br/com/rota/controller/OrderController.java), páginas React e testes de criação, edição, cancelamento e isolamento entre clientes |
+| Agentes modificam e avaliam pedidos; parecer positivo antes do contrato | [RentalService](backend/src/main/java/br/com/rota/service/RentalService.java); testes de análise financeira, invalidação do parecer após edição e bloqueio de contratação sem aprovação |
+| Automóveis e propriedade de cliente, empresa ou banco | [Vehicle](backend/src/main/java/br/com/rota/model/Vehicle.java) e [RentalContract](backend/src/main/java/br/com/rota/model/RentalContract.java); matrícula, ano, marca, modelo, placa e titularidade definida na contratação |
+| Contrato de crédito opcional concedido por banco agente | Associação ao banco, valor, juros e parcelas em `RentalContract`; teste que restringe a concessão ao próprio banco autenticado |
+| Casos de uso, histórias, classes e pacotes | [Modelos UML](docs/MODELAGEM.md) em fontes PlantUML e SVG, além das [histórias de usuário com critérios de aceite](docs/HISTORIAS-USUARIO.md) |
+| Comparação dos modelos iniciais com o código final | Versões `v1` e `v2` preservadas; [comparação das versões e justificativas](docs/MODELAGEM.md#comparação-das-versões-e-justificativas) explica as decisões de implementação |
+| Qualidade e demonstração do protótipo | **20 testes aprovados**, build React concluído, verificações no navegador, capturas de tela e [roteiro de apresentação](docs/ROTEIRO-APRESENTACAO.md) |
+
+A [matriz de rastreabilidade](docs/REQUISITOS.md) detalha os requisitos funcionais, a stack exigida, as permissões e as decisões complementares. As suítes [RentalFlowTest](backend/src/test/java/br/com/rota/RentalFlowTest.java) e [HttpSecurityTest](backend/src/test/java/br/com/rota/HttpSecurityTest.java) permitem reproduzir as verificações das regras de negócio e da API.
 
 ## Funcionalidades principais
 
@@ -89,6 +109,16 @@ O subsistema de páginas usa React como **View**. O subsistema de gestão concen
 
 Clientes e agentes são representados por `AppUser` com papel `CLIENT`, `COMPANY` ou `BANK`. O crédito é opcional e seus dados ficam associados a `RentalContract`. As justificativas e as correspondências entre o modelo conceitual e o código estão em [Modelagem](docs/MODELAGEM.md).
 
+### Modelos UML
+
+| Modelo | Versão conceitual | Versão correspondente ao código |
+| --- | --- | --- |
+| Casos de uso | [Diagrama v1](docs/uml/v1/casos-de-uso.svg) | [Diagrama v2](docs/uml/v2/casos-de-uso.svg) |
+| Classes | [Diagrama v1](docs/uml/v1/classes.svg) | [Diagrama v2](docs/uml/v2/classes.svg) |
+| Pacotes / visão lógica | [Diagrama v1](docs/uml/v1/pacotes.svg) | [Diagrama v2](docs/uml/v2/pacotes.svg) |
+
+As fontes editáveis estão nas mesmas pastas dos diagramas. A comparação documenta a centralização das credenciais em `AppUser`, os vínculos profissionais em `Employment`, a relação entre pedido e contrato e a representação do crédito opcional. O front-end corresponde ao subsistema de páginas web; o back-end concentra a gestão de pedidos e contratos.
+
 ## Instalação e execução
 
 ### Pré-requisitos
@@ -106,8 +136,8 @@ O Maven Wrapper está em `backend/`; não é necessário instalar Maven globalme
 Copie os arquivos de exemplo a partir da raiz do repositório:
 
 ```powershell
-Copy-Item backend/.env.example backend/.env
-Copy-Item frontend/.env.example frontend/.env
+if (!(Test-Path backend/.env)) { Copy-Item backend/.env.example backend/.env }
+if (!(Test-Path frontend/.env)) { Copy-Item frontend/.env.example frontend/.env }
 ```
 
 Edite `backend/.env` com os valores do painel **Connect → Session pooler** do Supabase:
@@ -117,9 +147,12 @@ DB_URL=jdbc:postgresql://SEU_HOST_DO_POOLER:5432/postgres?sslmode=require
 DB_USERNAME=postgres.SEU_PROJECT_REF
 DB_PASSWORD=SUA_SENHA_DO_BANCO
 APP_AGENT_REGISTRATION_CODE=ESCOLHA_UM_CODIGO_PRIVADO
+FRONTEND_ORIGIN=http://localhost:5173,http://localhost:5174
 ```
 
-Copie host e usuário do seu próprio projeto. O guia [Configuração](docs/CONFIGURACAO.md) explica cada campo, a preparação do Supabase e a resolução de erros. O código de agentes é definido por você e informado apenas ao cadastrar uma empresa ou banco. Cliente não precisa desse código.
+Copie host e usuário do seu próprio projeto; `DB_PASSWORD` recebe a senha do banco PostgreSQL. Use o Session pooler na porta `5432` com `sslmode=require`. O arquivo é carregado como Java Properties: use `CHAVE=valor`, sem aspas externas; uma barra invertida no valor deve ser escapada como `\\`. Inicie a API dentro de `backend`, onde está o `.env`.
+
+O código de agentes é definido por você e informado apenas ao cadastrar uma empresa ou banco. Cliente não precisa desse código. No front-end, mantenha `VITE_API_BASE_URL=` vazio para usar o proxy local.
 
 O React utiliza a API Spring em `/api`; em desenvolvimento, o Vite encaminha as requisições para `http://localhost:8080`. **Nenhuma chave `anon`, `service_role` ou API externa é necessária.** O login é implementado no Spring Security; não é preciso configurar Supabase Auth.
 
@@ -151,7 +184,7 @@ Terminal 2, dentro de `frontend`:
 npm.cmd run dev
 ```
 
-Abra **http://localhost:5173**. A API atende em **http://localhost:8080/api**. Em Linux/macOS, use `./mvnw` e `npm` nos comandos equivalentes.
+Abra o endereço informado pelo Vite: **http://localhost:5173** por padrão, ou **http://localhost:5174** se a primeira porta estiver ocupada. Para outra porta, ajuste `FRONTEND_ORIGIN` no back-end e reinicie a API. A API atende em **http://localhost:8080/api**. Em Linux/macOS, use `./mvnw` e `npm` nos comandos equivalentes.
 
 ### Primeiro uso
 
@@ -179,7 +212,7 @@ Dentro de `backend`, gere o executável:
 java -jar target/rota-api-1.0.0.jar
 ```
 
-Configure as mesmas variáveis de banco e de agente no ambiente do servidor, além de `SESSION_COOKIE_SECURE=true` sob HTTPS. Se o front-end usar outra origem, ajuste `FRONTEND_ORIGIN`, `VITE_API_BASE_URL` e as políticas de cookies de acordo com a topologia. Detalhes em [Configuração](docs/CONFIGURACAO.md#publicação).
+Configure as mesmas variáveis de banco e de agente no ambiente do servidor, além de `SESSION_COOKIE_SECURE=true` sob HTTPS. Se o front-end usar outra origem, ajuste `FRONTEND_ORIGIN`, `VITE_API_BASE_URL` e as políticas de cookies de acordo com a topologia. `VITE_API_BASE_URL` recebe a origem da API sem `/api` no final e é incorporada durante o build.
 
 ## Estrutura de pastas
 
@@ -207,7 +240,6 @@ docs/
   uml/v1/                     Modelagem conceitual inicial
   uml/v2/                     Modelagem alinhada à implementação
   API-CONTRACT.md             Endpoints e dados
-  CONFIGURACAO.md             API, Supabase e execução
   HISTORIAS-USUARIO.md        Histórias com critérios de aceite
   MODELAGEM.md                Diagramas e decisões de modelagem
   REQUISITOS.md               Requisitos e rastreabilidade
@@ -216,9 +248,9 @@ docs/
 
 ## Demonstração
 
-Siga o [roteiro de apresentação](docs/ROTEIRO-APRESENTACAO.md) para demonstrar cadastro, pedido, avaliação, contrato e crédito com contas de diferentes papéis. A interface começa vazia e apresenta os dados persistidos pelas ações realizadas.
+Siga o [roteiro de apresentação](docs/ROTEIRO-APRESENTACAO.md) para demonstrar cadastro, pedido, avaliação, contrato e crédito com contas de diferentes papéis. A interface apresenta os dados persistidos no projeto Supabase utilizado; novos bancos começam sem contas ou automóveis.
 
-Os nomes de usuário, senhas e documentos usados na demonstração devem ser dados de teste. Não há conta padrão com privilégios.
+Os nomes de usuário, senhas e documentos usados na demonstração devem ser dados de teste. As migrações não criam usuários; as contas para apresentação são preparadas pelos próprios fluxos de cadastro.
 
 As capturas abaixo mostram a aplicação conectada à API Java em um ambiente isolado de testes, com dados fictícios cadastrados pela interface. Não representam um banco Supabase já configurado.
 
@@ -253,7 +285,7 @@ No diretório `frontend`:
 npm.cmd run build
 ```
 
-O build verifica o empacotamento da interface. O [roteiro de apresentação](docs/ROTEIRO-APRESENTACAO.md) também lista cenários de validação manual de autorização, cancelamento, dados obrigatórios e limite de rendimentos. Nenhuma porcentagem de cobertura ou validação de um Supabase externo é presumida nesta documentação.
+O build da interface foi concluído. O [roteiro de apresentação](docs/ROTEIRO-APRESENTACAO.md) também lista cenários de validação manual de autorização, cancelamento, dados obrigatórios e limite de rendimentos. Os resultados acima distinguem a suíte automatizada em H2 da verificação adicional com o PostgreSQL real no Supabase.
 
 A verificação em Chromium também confirmou cadastro de banco e cliente, cadastro de automóvel, criação e edição de pedido, cancelamento, parecer financeiro e execução de contrato com crédito, usando a API real em ambiente isolado de testes. As cinco páginas do cliente foram verificadas em larguras de **320, 425, 768 e 1440 px**, sem rolagem horizontal no documento e sem erros JavaScript. Tabelas extensas mantêm rolagem dentro do próprio componente.
 

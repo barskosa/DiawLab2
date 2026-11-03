@@ -1,6 +1,6 @@
 # Requisitos e rastreabilidade
 
-Fonte: enunciado **DIAW — Laboratório 02 — Sistema de Aluguel de Carros**, três páginas, fornecido para este trabalho. A coluna de origem distingue o que foi solicitado no enunciado das decisões adotadas para tornar o protótipo executável.
+Fonte: enunciado **DIAW — Laboratório 02 — Sistema de Aluguel de Carros**, três páginas, fornecido para este trabalho. As seções abaixo distinguem os requisitos do enunciado das decisões complementares adotadas para tornar o protótipo executável.
 
 ## Requisitos funcionais do enunciado
 
@@ -37,7 +37,7 @@ Nos caminhos abaixo, `java/` significa `backend/src/main/java/br/com/rota/`.
 | DOC04 | Diagrama de pacotes / visão lógica | `docs/uml/v1/pacotes.puml` e `docs/uml/v2/pacotes.puml` |
 | DOC05 | Comparar modelos iniciais e implementação e preservar versões | [Modelagem](MODELAGEM.md), diretórios `v1` e `v2` |
 | DOC06 | README adaptado ao template da disciplina | `README.md` com as seções pertinentes ao projeto |
-| DOC07 | GitHub atualizado com modelos e código final | Arquivos preparados no checkout; envio ao GitHub deve ser feito pelo responsável antes da entrega |
+| DOC07 | GitHub atualizado com modelos e código final | Código, fontes UML, diagramas SVG e documentação versionados no [repositório do projeto](https://github.com/barskosa/DiawLab2) |
 | DOC08 | Revisar modelos conforme feedback em aula | Estrutura versionada preparada; nenhum feedback de aula foi fornecido nesta implementação |
 
 ## Decisões de implementação
