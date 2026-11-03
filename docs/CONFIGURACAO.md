@@ -98,6 +98,8 @@ order by table_name;
 
 O início normal não gera dados de demonstração. Após o primeiro cadastro pela interface, o usuário deve aparecer no esquema `rental`.
 
+Em 2 de novembro de 2026, a conexão foi validada localmente com um projeto real do Supabase, usando Session pooler e SSL: a migração V1 criou as tabelas, o Hibernate validou os mapeamentos e a API iniciou normalmente. Uma consulta de autenticação feita pelo front-end confirmou acesso ao PostgreSQL e funcionamento de sessão, CSRF e proxy, sem criar contas de teste no banco real. As credenciais dessa instalação permanecem no `.env` local.
+
 ## 5. Configurar e iniciar o front-end
 
 Na raiz, copie o exemplo:

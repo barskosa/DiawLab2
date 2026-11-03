@@ -8,7 +8,7 @@ Projeto acadêmico do **Laboratório 02 de Desenvolvimento e Integração de Apl
 
 ## Status do projeto
 
-Código da aplicação e documentação disponíveis neste repositório. Back-end compilado com JDK 25 e **20 testes aprovados** em ambiente local. A execução normal depende de configurar um projeto PostgreSQL no Supabase; a conexão com o seu projeto precisa ser validada após informar as credenciais. Nenhum banco, conta de agente ou dado de demonstração é criado em serviços externos pelo repositório.
+Código da aplicação e documentação disponíveis neste repositório. Back-end compilado com JDK 25, **20 testes aprovados** e conexão real com PostgreSQL no Supabase validada localmente. Cada instalação precisa de suas próprias credenciais em `backend/.env`. O Flyway cria as tabelas; as contas e os automóveis são cadastrados pela interface.
 
 ## Índice
 
@@ -245,7 +245,7 @@ O perfil `test` usa H2 isolado em modo PostgreSQL, aplica as migrações Flyway 
 | `RentalFlowTest` | 12 | Cadastro/CPF/vínculos, perfis, permissões, pedidos, pareceres, cancelamento, contrato, crédito e períodos conflitantes |
 | `HttpSecurityTest` | 8 | API HTTP real, sessão/CSRF, login/logout, convites, validação, isolamento e ciclo completo até contrato com crédito em requisições independentes |
 
-H2 permite testar as regras e as migrações em isolamento. A conexão e os comportamentos específicos do PostgreSQL/Supabase devem ser conferidos com as credenciais do seu projeto.
+H2 permite testar as regras e as migrações em isolamento. Também foi validada a execução normal com **PostgreSQL real no Supabase**, incluindo aplicação da migração V1, validação das entidades pelo Hibernate e consulta de autenticação pela interface com sessão/CSRF. Essa verificação de conexão é adicional à suíte de 20 testes em H2.
 
 No diretório `frontend`:
 
