@@ -21,6 +21,7 @@ Código da aplicação e documentação disponíveis neste repositório. Back-en
 - [Instalação e execução](#instalação-e-execução)
 - [Deploy](#deploy)
 - [Estrutura de pastas](#estrutura-de-pastas)
+- [Contas de demonstração](#contas-de-demonstração)
 - [Demonstração](#demonstração)
 - [Testes](#testes)
 - [Documentações utilizadas](#documentações-utilizadas)
@@ -32,6 +33,7 @@ Código da aplicação e documentação disponíveis neste repositório. Back-en
 ## Links úteis
 
 - [Repositório GitHub](https://github.com/barskosa/DiawLab2)
+- [Logins de teste para avaliação](#contas-de-demonstração)
 - [Requisitos e rastreabilidade](docs/REQUISITOS.md)
 - [Histórias de usuário e critérios de aceite](docs/HISTORIAS-USUARIO.md)
 - [Modelagem UML e comparação das versões](docs/MODELAGEM.md)
@@ -246,11 +248,32 @@ docs/
   ROTEIRO-APRESENTACAO.md      Demonstração e checklist de entrega
 ```
 
+## Contas de demonstração
+
+As contas abaixo foram preparadas na base Supabase utilizada para a apresentação, com dados fictícios e senha de teste publicada para avaliação do projeto.
+
+| Papel | Usuário | Senha | O que avaliar |
+| --- | --- | --- | --- |
+| Cliente | `cliente.teste` | `Teste123!` | Consultar e editar cadastro, criar/alterar/cancelar pedidos, acompanhar status e consultar contratos |
+| Empresa | `empresa.teste` | `Teste123!` | Gerenciar a frota, consultar clientes, alterar e avaliar pedidos, executar contratos |
+| Banco | `banco.teste` | `Teste123!` | Avaliar pedidos e executar contratos com crédito concedido pelo próprio banco |
+
+Para entrar:
+
+1. Execute o back-end e o front-end conforme [Instalação e execução](#instalação-e-execução).
+2. Mantenha o back-end conectado ao **mesmo projeto Supabase** em que essas contas foram cadastradas, usando a configuração local de `backend/.env`.
+3. Abra o endereço informado pelo Vite e preencha **Usuário** e **Senha** com uma das combinações da tabela.
+4. Use **Sair da conta** para alternar entre os três papéis durante a avaliação.
+
+As migrações criam a estrutura do banco; **as contas de demonstração foram cadastradas previamente nessa base**. Se outra instalação utilizar um projeto Supabase novo, prepare as contas pelos fluxos de cadastro descritos em [Primeiro uso](#primeiro-uso). O código privado de agentes é solicitado ao cadastrar empresa/banco; entrar em uma conta existente usa apenas usuário e senha.
+
+As credenciais do banco e o código de agentes permanecem na configuração privada do servidor. Somente os acessos de aplicação destinados à demonstração estão publicados nesta seção.
+
 ## Demonstração
 
 Siga o [roteiro de apresentação](docs/ROTEIRO-APRESENTACAO.md) para demonstrar cadastro, pedido, avaliação, contrato e crédito com contas de diferentes papéis. A interface apresenta os dados persistidos no projeto Supabase utilizado; novos bancos começam sem contas ou automóveis.
 
-Os nomes de usuário, senhas e documentos usados na demonstração devem ser dados de teste. As migrações não criam usuários; as contas para apresentação são preparadas pelos próprios fluxos de cadastro.
+Use os [logins de demonstração](#contas-de-demonstração) para acompanhar os fluxos com cada papel. As migrações não criam usuários; as contas para apresentação são preparadas pelos próprios fluxos de cadastro, com dados de teste.
 
 As capturas abaixo mostram a aplicação conectada à API Java em um ambiente isolado de testes, com dados fictícios cadastrados pela interface. Não representam um banco Supabase já configurado.
 

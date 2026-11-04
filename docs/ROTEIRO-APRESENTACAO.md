@@ -5,8 +5,10 @@
 1. Prepare JDK 25 e o Supabase conforme [Instalação e execução no README](../README.md#instalação-e-execução).
 2. Execute os testes do back-end e o build do front-end.
 3. Inicie a API e o React em dois terminais.
-4. Prepare dados de teste de uma empresa, um banco e dois clientes com documentos válidos distintos. Não use dados pessoais reais de terceiros.
+4. Consulte as [contas de demonstração no README](../README.md#contas-de-demonstração): `cliente.teste`, `empresa.teste` e `banco.teste`, todas com a senha de aplicação `Teste123!`. Essas contas foram cadastradas na base Supabase de apresentação; inicie a API usando a configuração local desse mesmo projeto.
 5. Mantenha disponíveis o enunciado, o README, a modelagem `v1` e a modelagem `v2`.
+
+Para apresentar também o cadastro e a exclusão, prepare um cliente adicional com documento de teste válido e distinto. Preserve os acessos de demonstração para o professor repetir os fluxos. Se for usado um novo projeto Supabase, cadastre primeiro as contas conforme [Primeiro uso](../README.md#primeiro-uso); as migrações não geram esses usuários.
 
 ## Demonstração sugerida
 
@@ -61,7 +63,7 @@ As duas versões foram produzidas para esta implementação; não representam fe
 - [ ] README revisado com nomes reais dos integrantes e divisão de contribuições.
 - [ ] Modelos UML e histórias revisados em relação à versão final do código.
 - [ ] Feedback de aula incorporado e documentado, caso exista.
-- [ ] `.env`, senhas, código de agentes, `node_modules`, `target` e dados pessoais fora do commit.
+- [ ] `.env`, senha do banco, chaves privadas, código de agentes, `node_modules`, `target` e dados pessoais reais fora do commit; somente as credenciais de aplicação destinadas à demonstração estão publicadas no README.
 - [ ] Código e todas as versões de UML enviados ao repositório GitHub.
 - [ ] Link do repositório e forma de execução conferidos em outro checkout, quando possível.
 
