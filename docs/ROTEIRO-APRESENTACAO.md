@@ -10,6 +10,19 @@
 
 Para apresentar também o cadastro e a exclusão, prepare um cliente adicional com documento de teste válido e distinto. Preserve os acessos de demonstração para o professor repetir os fluxos. Se for usado um novo projeto Supabase, cadastre primeiro as contas conforme [Primeiro uso](../README.md#primeiro-uso); as migrações não geram esses usuários.
 
+## Acesso rápido aos cenários preparados
+
+As contas de demonstração foram verificadas em **3 de novembro de 2026**, na execução normal com PostgreSQL no Supabase. Entre como `cliente.teste` para localizar quatro pedidos com a observação **“Demonstração para o professor”**, referentes ao Fiat Argo 2025, matrícula `TESTE-001`, placa `TST1A23` e diária de R$ 150,00:
+
+| Período | Estado preparado | Demonstração |
+| --- | --- | --- |
+| 10 a 13/11/2026 | Contratado | Consultar o contrato e o crédito de R$ 450,00, taxa de 1,5% e três parcelas |
+| 17 a 20/11/2026 | Em análise | Editar o pedido ou entrar como agente e emitir um parecer |
+| 24 a 27/11/2026 | Aprovado | Entrar como empresa/banco e executar o contrato |
+| 1 a 3/12/2026 | Cancelado | Mostrar o histórico de cancelamento |
+
+Use **Sair da conta** para alternar entre cliente, empresa e banco. O pedido em análise e o aprovado estão disponíveis para testar as próximas etapas; executar essas ações muda os estados preparados. As [12 capturas no README](../README.md#galeria-da-aplicação) registram a aplicação e os dados dessa preparação.
+
 ## Demonstração sugerida
 
 | Etapa | Ação | O que comprova |

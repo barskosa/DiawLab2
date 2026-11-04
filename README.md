@@ -250,7 +250,7 @@ docs/
 
 ## Contas de demonstração
 
-As contas abaixo foram preparadas na base Supabase utilizada para a apresentação, com dados fictícios e senha de teste publicada para avaliação do projeto.
+As contas abaixo foram preparadas na base Supabase utilizada para a apresentação, com dados fictícios e senha de teste publicada para avaliação do projeto. Os três acessos foram verificados em **3 de novembro de 2026**.
 
 | Papel | Usuário | Senha | O que avaliar |
 | --- | --- | --- | --- |
@@ -275,15 +275,52 @@ Siga o [roteiro de apresentação](docs/ROTEIRO-APRESENTACAO.md) para demonstrar
 
 Use os [logins de demonstração](#contas-de-demonstração) para acompanhar os fluxos com cada papel. As migrações não criam usuários; as contas para apresentação são preparadas pelos próprios fluxos de cadastro, com dados de teste.
 
-As capturas abaixo mostram a aplicação conectada à API Java em um ambiente isolado de testes, com dados fictícios cadastrados pela interface. Não representam um banco Supabase já configurado.
+### Cenários preparados para avaliação
 
-| Login | Painel do cliente |
+Na base de apresentação, o cliente `cliente.teste` possui quatro pedidos identificados como **“Demonstração para o professor”**. O automóvel é um **Fiat Argo 2025**, com diária de **R$ 150,00**, matrícula `TESTE-001` e placa `TST1A23`.
+
+| Período de aluguel | Estado preparado | Fluxo disponível |
+| --- | --- | --- |
+| 10 a 13/11/2026 | Contratado | Consultar contrato com crédito de R$ 450,00, taxa de 1,5% e três parcelas, concedido pelo banco de demonstração |
+| 17 a 20/11/2026 | Em análise | Cliente ou agente pode editar; agente pode emitir o parecer financeiro |
+| 24 a 27/11/2026 | Aprovado | Agente pode executar o contrato; editar o pedido exige nova análise |
+| 1 a 3/12/2026 | Cancelado | Consultar o histórico de cancelamento |
+
+Os estados acima representam a preparação de **3 de novembro de 2026**. As ações realizadas durante a avaliação alteram esses registros.
+
+### Galeria da aplicação
+
+As **12 capturas**, realizadas em **3 de novembro de 2026**, mostram a aplicação em execução normal: React, API Java e **PostgreSQL real no Supabase**, com dados fictícios cadastrados pelos fluxos da aplicação. Clique em qualquer imagem ou em **Abrir imagem** para visualizar a captura completa.
+
+| Login | Cadastro de cliente |
 | --- | --- |
-| ![Tela de login](docs/images/login.png) | ![Painel do cliente com pedidos e contrato](docs/images/dashboard.png) |
-| Pedidos do agente | Contrato com crédito |
-| ![Pedidos e status de contratação](docs/images/pedidos.png) | ![Contrato com propriedade e crédito do banco](docs/images/contrato.png) |
+| <a href="docs/images/login.png"><img src="docs/images/login.png" alt="Tela de login com os campos de usuário e senha" width="430"></a> | <a href="docs/images/cadastro.png"><img src="docs/images/cadastro.png" alt="Formulário de cadastro com identificação e rendimentos do cliente" width="430"></a> |
+| Acesso com usuário e senha para os três papéis. [Abrir imagem](docs/images/login.png) | Identificação, profissão e vínculos empregatícios. [Abrir imagem](docs/images/cadastro.png) |
 
-Veja também a [interface em uma tela de 320 px](docs/images/mobile.png).
+| Painel do cliente | Frota de automóveis |
+| --- | --- |
+| <a href="docs/images/dashboard.png"><img src="docs/images/dashboard.png" alt="Painel do cliente com resumo dos pedidos e contratos" width="430"></a> | <a href="docs/images/frota.png"><img src="docs/images/frota.png" alt="Frota com automóvel, diária, matrícula e placa" width="430"></a> |
+| Resumo dos pedidos, status e contratos do cliente. [Abrir imagem](docs/images/dashboard.png) | Consulta de automóveis e acesso à solicitação de aluguel. [Abrir imagem](docs/images/frota.png) |
+
+| Pedidos de aluguel | Novo pedido |
+| --- | --- |
+| <a href="docs/images/pedidos.png"><img src="docs/images/pedidos.png" alt="Lista de pedidos com os estados contratado, em análise, aprovado e cancelado" width="430"></a> | <a href="docs/images/novo-pedido.png"><img src="docs/images/novo-pedido.png" alt="Formulário para escolher automóvel e período de aluguel" width="430"></a> |
+| Acompanhamento dos períodos e estados das solicitações. [Abrir imagem](docs/images/pedidos.png) | Escolha do automóvel, datas, observações e estimativa de valor. [Abrir imagem](docs/images/novo-pedido.png) |
+
+| Avaliação financeira | Clientes do sistema |
+| --- | --- |
+| <a href="docs/images/avaliacao.png"><img src="docs/images/avaliacao.png" alt="Formulário do agente para aprovar ou rejeitar pedido e registrar justificativa" width="430"></a> | <a href="docs/images/clientes.png"><img src="docs/images/clientes.png" alt="Lista de clientes disponível aos agentes com documentos, profissão e renda" width="430"></a> |
+| Parecer do agente com aprovação ou rejeição e justificativa. [Abrir imagem](docs/images/avaliacao.png) | Consulta e edição dos dados usados na análise. [Abrir imagem](docs/images/clientes.png) |
+
+| Cadastro do cliente | Contratos de aluguel |
+| --- | --- |
+| <a href="docs/images/perfil.png"><img src="docs/images/perfil.png" alt="Perfil do cliente com dados pessoais e rendimentos cadastrados" width="430"></a> | <a href="docs/images/contratos.png"><img src="docs/images/contratos.png" alt="Listagem dos contratos de aluguel formalizados" width="430"></a> |
+| Dados pessoais, vínculos e ações de manutenção do cadastro. [Abrir imagem](docs/images/perfil.png) | Consulta dos aluguéis formalizados após aprovação. [Abrir imagem](docs/images/contratos.png) |
+
+| Detalhes do contrato com crédito | Interface em celular |
+| --- | --- |
+| <a href="docs/images/contrato.png"><img src="docs/images/contrato.png" alt="Contrato com proprietário, banco concedente, valor do crédito, taxa e parcelas" width="430"></a> | <a href="docs/images/mobile.png"><img src="docs/images/mobile.png" alt="Painel do cliente adaptado a uma tela de 320 pixels" width="220"></a> |
+| Propriedade registrada e condições do crédito concedido pelo banco. [Abrir imagem](docs/images/contrato.png) | Navegação e conteúdo adaptados à largura de 320 px. [Abrir imagem](docs/images/mobile.png) |
 
 ## Testes
 
