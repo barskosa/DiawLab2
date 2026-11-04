@@ -14,13 +14,12 @@ import java.util.*;
 @Service @Transactional
 public class RentalService {
     private final AuthService auth;
-    private final UserRepository users;
     private final VehicleRepository vehicles;
     private final OrderRepository orders;
     private final ContractRepository contracts;
-    public RentalService(AuthService auth, UserRepository users, VehicleRepository vehicles,
+    public RentalService(AuthService auth, VehicleRepository vehicles,
             OrderRepository orders, ContractRepository contracts) {
-        this.auth = auth; this.users = users; this.vehicles = vehicles; this.orders = orders; this.contracts = contracts;
+        this.auth = auth; this.vehicles = vehicles; this.orders = orders; this.contracts = contracts;
     }
     public List<VehicleView> vehicles() { auth.current(); return vehicles.findAllByOrderByBrandAscModelAsc().stream().map(RentalService::vehicleView).toList(); }
     public VehicleView createVehicle(VehicleInput input) {
@@ -41,13 +40,14 @@ public class RentalService {
         String plate = input.plate().replace("-", "").toUpperCase(Locale.ROOT).trim();
         if (!plate.matches("[A-Z]{3}[0-9][A-Z0-9][0-9]{2}")) throw ApiException.badRequest("Informe uma placa válida no formato ABC1234 ou ABC1D23.");
         UUID id = vehicle.id == null ? new UUID(0,0) : vehicle.id;
-        String registration = input.registration().trim().toUpperCase(Locale.ROOT);
+        String registration = text(input.registration(),60,"Matrícula",true).toUpperCase(Locale.ROOT);
+        if (registration.length() > 60) throw ApiException.badRequest("A matrícula deve conter até 60 caracteres após a normalização.");
         if (vehicles.existsByRegistrationAndIdNot(registration,id)) throw ApiException.conflict("A matrícula já está cadastrada.");
         if (vehicles.existsByPlateAndIdNot(plate,id)) throw ApiException.conflict("A placa já está cadastrada.");
-        if (input.year() > today().getYear() + 1) throw ApiException.badRequest("O ano do automóvel não pode ultrapassar o próximo ano.");
-        vehicle.registration = registration; vehicle.year = input.year(); vehicle.brand = input.brand().trim();
-        vehicle.model = input.model().trim(); vehicle.plate = plate; vehicle.dailyRate = input.dailyRate().setScale(2,RoundingMode.UNNECESSARY);
-        vehicle.category = input.category().trim();
+        if (input.year() > RentalDates.today().getYear() + 1) throw ApiException.badRequest("O ano do automóvel não pode ultrapassar o próximo ano.");
+        vehicle.registration = registration; vehicle.year = input.year(); vehicle.brand = text(input.brand(),80,"Marca",true);
+        vehicle.model = text(input.model(),100,"Modelo",true); vehicle.plate = plate; vehicle.dailyRate = input.dailyRate().setScale(2,RoundingMode.UNNECESSARY);
+        vehicle.category = text(input.category(),60,"Categoria",true);
     }
     public List<OrderView> orders() {
         var user = auth.current();
@@ -55,7 +55,7 @@ public class RentalService {
     }
     public OrderView order(UUID id) { var user = auth.current(); var order = findOrder(id); allowOrder(user,order); return orderView(order); }
     public OrderView createOrder(OrderInput input) {
-        var client = auth.current(); AuthService.requireClient(client);
+        var client = auth.currentForUpdate(); AuthService.requireClient(client);
         var order = new RentalOrder(); order.client = client; applyOrder(order,input);
         return orderView(orders.saveAndFlush(order));
     }
@@ -72,22 +72,22 @@ public class RentalService {
         var agent = auth.current(); AuthService.requireAgent(agent); var order = lockedOrder(id);
         if (order.status != OrderStatus.PENDING) throw ApiException.conflict("Somente pedidos em análise podem receber parecer.");
         order.status = input.approved() ? OrderStatus.APPROVED : OrderStatus.REJECTED;
-        order.reviewNotes = input.reviewNotes().trim(); order.reviewedBy = agent;
+        order.reviewNotes = text(input.reviewNotes(),2000,"Parecer financeiro",true); order.reviewedBy = agent;
         return orderView(orders.saveAndFlush(order));
     }
     private void applyOrder(RentalOrder order, OrderInput input) {
-        validateDates(input.startDate(),input.endDate());
+        RentalDates.validate(input.startDate(),input.endDate());
         var vehicle = lockedVehicle(input.vehicleId());
         ensureAvailable(vehicle.id,input.startDate(),input.endDate());
         BigDecimal amount = vehicle.dailyRate.multiply(BigDecimal.valueOf(Math.max(1,ChronoUnit.DAYS.between(input.startDate(),input.endDate())))).setScale(2);
         if (amount.compareTo(new BigDecimal("999999999999.99")) > 0) throw ApiException.badRequest("O valor do período ultrapassa o limite permitido.");
         order.vehicle = vehicle; order.startDate = input.startDate(); order.endDate = input.endDate();
-        order.notes = input.notes() == null ? "" : input.notes().trim(); order.totalAmount = amount;
+        order.notes = text(input.notes(),2000,"Observações",false); order.totalAmount = amount;
     }
     public ContractView createContract(UUID id, ContractInput input) {
         var agent = auth.current(); AuthService.requireAgent(agent); var order = lockedOrder(id);
         if (order.status != OrderStatus.APPROVED) throw ApiException.conflict("O pedido precisa de parecer financeiro positivo antes da contratação.");
-        validateDates(order.startDate,order.endDate);
+        RentalDates.validate(order.startDate,order.endDate);
         var vehicle = lockedVehicle(order.vehicle.id);
         ensureAvailable(vehicle.id,order.startDate,order.endDate);
         var contract = new RentalContract(); contract.order = order;
@@ -108,6 +108,13 @@ public class RentalService {
             }
         };
         vehicle.owner = contract.owner; vehicles.save(vehicle);
+        contract.snapshotVehicleRegistration = vehicle.registration; contract.snapshotVehicleYear = vehicle.year;
+        contract.snapshotVehicleBrand = vehicle.brand; contract.snapshotVehicleModel = vehicle.model;
+        contract.snapshotVehiclePlate = vehicle.plate; contract.snapshotVehicleCategory = vehicle.category;
+        // A tarifa negociada é a usada no pedido, mesmo que a diária da frota tenha sido editada.
+        contract.snapshotVehicleDailyRate = order.totalAmount.divide(BigDecimal.valueOf(Math.max(1,ChronoUnit.DAYS.between(order.startDate,order.endDate))),2,RoundingMode.UNNECESSARY);
+        contract.snapshotClientName = order.client.name; contract.snapshotOwnerName = contract.owner.name;
+        contract.snapshotBankName = contract.bank == null ? null : contract.bank.name;
         order.status = OrderStatus.CONTRACTED; orders.save(order);
         return contractView(contracts.saveAndFlush(contract));
     }
@@ -116,18 +123,13 @@ public class RentalService {
         return (user.role == Role.CLIENT ? contracts.findByOrderClientIdOrderBySignedAtDesc(user.id) : contracts.findAllByOrderBySignedAtDesc()).stream().map(RentalService::contractView).toList();
     }
     private void ensureAvailable(UUID vehicleId, LocalDate start, LocalDate end) {
-        LocalDate effectiveEnd = end.equals(start) ? end.plusDays(1) : end;
+        LocalDate effectiveEnd = RentalDates.endExclusive(start,end);
         for (var booked : orders.findByVehicleIdAndStatus(vehicleId,OrderStatus.CONTRACTED)) {
-            LocalDate bookedEnd = booked.endDate.equals(booked.startDate) ? booked.endDate.plusDays(1) : booked.endDate;
+            LocalDate bookedEnd = RentalDates.endExclusive(booked.startDate,booked.endDate);
             if (start.isBefore(bookedEnd) && booked.startDate.isBefore(effectiveEnd))
                 throw ApiException.conflict("O automóvel já possui contrato no período escolhido. Selecione outras datas.");
         }
     }
-    private static void validateDates(LocalDate start, LocalDate end) {
-        if (start == null || end == null || start.isBefore(today()) || end.isBefore(start))
-            throw ApiException.badRequest("A retirada deve ser a partir de hoje e a devolução não pode ser anterior à retirada.");
-    }
-    private static LocalDate today() { return LocalDate.now(ZoneId.of("America/Sao_Paulo")); }
     private RentalOrder findOrder(UUID id) { return orders.findById(id).orElseThrow(() -> ApiException.notFound("Pedido")); }
     private RentalOrder lockedOrder(UUID id) { return orders.findLocked(id).orElseThrow(() -> ApiException.notFound("Pedido")); }
     private Vehicle lockedVehicle(UUID id) { return vehicles.findLocked(id).orElseThrow(() -> ApiException.notFound("Automóvel")); }
@@ -135,11 +137,23 @@ public class RentalService {
     private static void requireEditable(RentalOrder order) {
         if (order.status != OrderStatus.PENDING && order.status != OrderStatus.APPROVED) throw ApiException.conflict("Somente pedidos em análise ou aprovados podem ser alterados ou cancelados.");
     }
+    private static String text(String value, int max, String label, boolean required) {
+        if (value == null) {
+            if (required) throw ApiException.badRequest(label + " é obrigatório.");
+            return "";
+        }
+        if ((required && value.isBlank()) || value.length() > max || value.indexOf('\0') >= 0)
+            throw ApiException.badRequest(label + " deve conter até " + max + " caracteres válidos.");
+        return value.strip();
+    }
     public static VehicleView vehicleView(Vehicle v) { return new VehicleView(v.id,v.registration,v.year,v.brand,v.model,v.plate,v.dailyRate,v.category,v.owner.role,v.owner.id,v.owner.name); }
     public static OrderView orderView(RentalOrder o) { return new OrderView(o.id,o.client.id,o.client.name,o.vehicle.id,vehicleView(o.vehicle),o.startDate,o.endDate,o.totalAmount,o.status,o.notes,o.reviewNotes,o.reviewedBy == null ? null : o.reviewedBy.name,o.createdAt); }
     public static ContractView contractView(RentalContract c) {
         var o = c.order;
-        var credit = c.bank == null ? null : new CreditView(c.bank.id,c.bank.name,c.creditAmount,c.interestRate,c.installments);
-        return new ContractView(c.id,o.id,o.client.name,vehicleView(o.vehicle),o.startDate,o.endDate,o.totalAmount,c.owner.role,c.owner.name,c.signedAt,credit);
+        var credit = c.bank == null ? null : new CreditView(c.bank.id,c.snapshotBankName,c.creditAmount,c.interestRate,c.installments);
+        var vehicle = new VehicleView(o.vehicle.id,c.snapshotVehicleRegistration,c.snapshotVehicleYear,c.snapshotVehicleBrand,
+                c.snapshotVehicleModel,c.snapshotVehiclePlate,c.snapshotVehicleDailyRate,c.snapshotVehicleCategory,
+                c.owner.role,c.owner.id,c.snapshotOwnerName);
+        return new ContractView(c.id,o.id,c.snapshotClientName,vehicle,o.startDate,o.endDate,o.totalAmount,c.owner.role,c.snapshotOwnerName,c.signedAt,credit);
     }
 }

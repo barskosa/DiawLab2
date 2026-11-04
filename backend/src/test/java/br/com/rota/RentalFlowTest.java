@@ -23,6 +23,7 @@ class RentalFlowTest {
     @Autowired AuthService auth;
     @Autowired RentalService rentals;
     @Autowired UserRepository users;
+    @Autowired br.com.rota.repository.OrderRepository orders;
     UserView client, company, bank;
     VehicleView vehicle;
     final LocalDate start = LocalDate.now(ZoneId.of("America/Sao_Paulo")).plusDays(2);
@@ -48,6 +49,14 @@ class RentalFlowTest {
         as(client); var updated = rentals.updateOrder(order.id(),new OrderInput(vehicle.id(),start,start.plusDays(5),"Novo período"));
         assertEquals(OrderStatus.PENDING,updated.status()); assertNull(updated.reviewNotes()); assertNull(updated.reviewedByName());
         assertEquals(new BigDecimal("750.00"),updated.totalAmount());
+    }
+    @Test void bothAgentRolesCanModifyOrdersAndTheirChangesRequireAnotherReview() {
+        for (var agent : List.of(company,bank)) {
+            var order = request(); as(company); rentals.reviewOrder(order.id(),new ReviewInput(true,"Aprovado."));
+            as(agent); var updated = rentals.updateOrder(order.id(),new OrderInput(vehicle.id(),start,start.plusDays(4),"Alterado por agente"));
+            assertEquals(OrderStatus.PENDING,updated.status()); assertNull(updated.reviewedByName()); assertNull(updated.reviewNotes());
+            assertEquals(new BigDecimal("600.00"),updated.totalAmount());
+        }
     }
     @Test void pendingRequestCanBeCancelledAndCannotBeReviewedAfterwards() {
         var order = request(); as(client); assertEquals(OrderStatus.CANCELLED,rentals.cancelOrder(order.id()).status());
@@ -80,6 +89,22 @@ class RentalFlowTest {
         as(bank); var contract = rentals.createContract(order.id(),new ContractInput(Role.BANK,credit));
         assertEquals(bank.id(),contract.credit().bankId()); assertEquals(new BigDecimal("400.00"),contract.credit().amount());
         assertEquals(Role.BANK,contract.ownerType());
+    }
+    @Test void signedContractKeepsTheQuotedRateAndPartiesAfterLaterOwnershipChanges() {
+        var order = request();
+        as(bank); rentals.reviewOrder(order.id(),new ReviewInput(true,"Crédito aprovado."));
+        rentals.updateVehicle(vehicle.id(),new VehicleInput(vehicle.registration(),vehicle.year(),vehicle.brand(),vehicle.model(),vehicle.plate(),new BigDecimal("999.00"),vehicle.category()));
+        var signed = rentals.createContract(order.id(),new ContractInput(Role.CLIENT,new CreditInput(bank.id(),new BigDecimal("400.00"),new BigDecimal("1.5"),4)));
+        assertEquals(new BigDecimal("150.00"),signed.vehicle().dailyRate());
+        as(client); auth.updateMyProfile(new ProfileInput("Nome atualizado","MG123456","52998224725","Rua atualizada","Analista",List.of()));
+        var bankUser = users.findById(bank.id()).orElseThrow(); bankUser.name = "Banco atualizado"; users.saveAndFlush(bankUser);
+        var next = rentals.createOrder(new OrderInput(vehicle.id(),start.plusDays(4),start.plusDays(5),"Próximo aluguel"));
+        as(bank); rentals.reviewOrder(next.id(),new ReviewInput(true,"Aprovado.")); rentals.createContract(next.id(),new ContractInput(Role.BANK,null));
+        var original = rentals.contracts().stream().filter(c -> c.id().equals(signed.id())).findFirst().orElseThrow();
+        assertEquals("cliente",original.clientName()); assertEquals("cliente",original.ownerName());
+        assertEquals("banco",original.credit().bankName()); assertEquals(Role.CLIENT,original.vehicle().ownerType());
+        assertEquals(client.id(),original.vehicle().ownerId()); assertEquals(new BigDecimal("150.00"),original.vehicle().dailyRate());
+        assertEquals(Role.BANK,rentals.vehicles().stream().filter(v -> v.id().equals(vehicle.id())).findFirst().orElseThrow().ownerType());
     }
     @Test void cannotDoubleBookAnApprovedRequestOrCreateAnOverlappingRequest() {
         var first = request(); var second = request();
@@ -118,8 +143,26 @@ class RentalFlowTest {
         assertFalse(users.findById(client.id()).orElseThrow().active); assertNull(users.findById(client.id()).orElseThrow().cpf);
         assertThrows(ApiException.class,() -> auth.me());
     }
+    @Test void accountDeletionIsAllowedOnTheExclusiveReturnDateAndPreservesSignedNames() {
+        var order = request(); as(company); rentals.reviewOrder(order.id(),new ReviewInput(true,"Aprovado."));
+        var contract = rentals.createContract(order.id(),new ContractInput(Role.CLIENT,null));
+        // Simula um contrato histórico que terminou hoje, sem alterar o relógio global dos testes.
+        var historical = orders.findById(order.id()).orElseThrow();
+        historical.startDate = LocalDate.now(ZoneId.of("America/Sao_Paulo")).minusDays(2);
+        historical.endDate = LocalDate.now(ZoneId.of("America/Sao_Paulo")); orders.saveAndFlush(historical);
+        as(client); assertDoesNotThrow(() -> auth.deleteMe());
+        as(company); var preserved = rentals.contracts().stream().filter(c -> c.id().equals(contract.id())).findFirst().orElseThrow();
+        assertEquals("cliente",preserved.clientName()); assertEquals("cliente",preserved.ownerName());
+        assertEquals("cliente",preserved.vehicle().ownerName());
+    }
+    @Test void sameDayContractStillBlocksAccountDeletionDuringThatDay() {
+        LocalDate today = LocalDate.now(ZoneId.of("America/Sao_Paulo"));
+        as(client); var order = rentals.createOrder(new OrderInput(vehicle.id(),today,today,"Uma diária"));
+        as(company); rentals.reviewOrder(order.id(),new ReviewInput(true,"Aprovado.")); rentals.createContract(order.id(),new ContractInput(Role.CLIENT,null));
+        as(client); assertThrows(ApiException.class,() -> auth.deleteMe());
+    }
     private OrderView request() { as(client); return rentals.createOrder(new OrderInput(vehicle.id(),start,start.plusDays(3),"Aluguel para viagem.")); }
-    private void as(UserView user) { SecurityContextHolder.getContext().setAuthentication(UsernamePasswordAuthenticationToken.authenticated(user.username(),null,List.of(new SimpleGrantedAuthority("ROLE_"+user.role())))); }
+    private void as(UserView user) { SecurityContextHolder.getContext().setAuthentication(UsernamePasswordAuthenticationToken.authenticated(user.id().toString(),null,List.of(new SimpleGrantedAuthority("ROLE_"+user.role())))); }
     private RegistrationInput clientInput(String username,String cpf,List<EmploymentInput> links) { return new RegistrationInput(username,"SenhaSegura123",username,Role.CLIENT,null,"MG123456",cpf,"Rua de Teste, 10","Analista",links); }
     private RegistrationInput agentInput(String username,Role role,String code) { return new RegistrationInput(username,"SenhaSegura123",username,role,code,null,null,null,null,null); }
 }

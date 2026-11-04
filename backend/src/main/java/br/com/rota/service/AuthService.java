@@ -18,8 +18,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.*;
 
 @Service @Transactional
@@ -38,6 +36,7 @@ public class AuthService {
         this.contexts = contexts; this.csrf = csrf; this.agentCode = agentCode;
     }
     public UserView register(RegistrationInput input) {
+        required(input.name(),150,"Nome");
         String username = input.username().trim().toLowerCase(Locale.ROOT);
         if (users.existsByUsername(username)) throw ApiException.conflict("Este nome de usuário já está cadastrado.");
         if (input.password().getBytes(StandardCharsets.UTF_8).length > 72)
@@ -56,7 +55,8 @@ public class AuthService {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "Usuário ou senha incorretos.");
         if (request.getSession(false) != null) request.changeSessionId();
         var context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(UsernamePasswordAuthenticationToken.authenticated(user.get().username, null,
+        // A identidade de uma sessão não pode ser reciclada junto com o nome de usuário.
+        context.setAuthentication(UsernamePasswordAuthenticationToken.authenticated(user.get().id.toString(), null,
                 List.of(new SimpleGrantedAuthority("ROLE_" + user.get().role.name()))));
         SecurityContextHolder.setContext(context); contexts.saveContext(context, request, response);
         csrf.saveToken(null, request, response);
@@ -69,28 +69,41 @@ public class AuthService {
     }
     @Transactional(readOnly = true)
     public AppUser current() {
+        return users.findById(currentId()).filter(u -> u.active).orElseThrow(AuthService::unauthenticated);
+    }
+    public AppUser currentForUpdate() {
+        // Serializa exclusão/edição da conta e criação de pedidos do mesmo titular.
+        return users.findLocked(currentId()).filter(u -> u.active).orElseThrow(AuthService::unauthenticated);
+    }
+    private UUID currentId() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) throw unauthenticated();
-        return users.findByUsername(authentication.getName()).filter(u -> u.active).orElseThrow(AuthService::unauthenticated);
+        try { return UUID.fromString(authentication.getName()); }
+        catch (IllegalArgumentException ex) { throw unauthenticated(); }
     }
     private static ApiException unauthenticated() { return new ApiException(HttpStatus.UNAUTHORIZED, "Faça login para continuar."); }
     public static void requireAgent(AppUser user) { if (user.role == Role.CLIENT) throw ApiException.forbidden(); }
     public static void requireClient(AppUser user) { if (user.role != Role.CLIENT) throw ApiException.forbidden(); }
     public UserView me() { return userView(current()); }
     public ClientView myProfile() { var user = current(); requireClient(user); return clientView(user); }
-    public ClientView updateMyProfile(ProfileInput input) { var user = current(); requireClient(user); applyProfile(user,input); return clientView(users.saveAndFlush(user)); }
+    public ClientView updateMyProfile(ProfileInput input) { var user = currentForUpdate(); requireClient(user); applyProfile(user,input); return clientView(users.saveAndFlush(user)); }
     public List<ClientView> clients() { requireAgent(current()); return users.findByRoleAndActiveTrueOrderByNameAsc(Role.CLIENT).stream().map(AuthService::clientView).toList(); }
     public ClientView client(UUID id) { requireAgent(current()); return clientView(findClient(id)); }
-    public ClientView updateClient(UUID id, ProfileInput input) { requireAgent(current()); var client = findClient(id); applyProfile(client,input); return clientView(users.saveAndFlush(client)); }
+    public ClientView updateClient(UUID id, ProfileInput input) {
+        requireAgent(current());
+        var client = users.findLocked(id).filter(u -> u.active && u.role == Role.CLIENT).orElseThrow(() -> ApiException.notFound("Cliente"));
+        applyProfile(client,input); return clientView(users.saveAndFlush(client));
+    }
     private AppUser findClient(UUID id) { return users.findById(id).filter(u -> u.active && u.role == Role.CLIENT).orElseThrow(() -> ApiException.notFound("Cliente")); }
     public List<BankView> banks() { current(); return users.findByRoleAndActiveTrueOrderByNameAsc(Role.BANK).stream().map(u -> new BankView(u.id,u.name)).toList(); }
     public void deleteMe() {
-        var user = current(); requireClient(user);
+        var user = currentForUpdate(); requireClient(user);
         boolean activeOrders = orders.existsByClientIdAndStatusIn(user.id,List.of(OrderStatus.PENDING,OrderStatus.APPROVED));
-        boolean activeContracts = contracts.findByOrderClientIdOrderBySignedAtDesc(user.id).stream().anyMatch(c -> !c.order.endDate.isBefore(LocalDate.now(ZoneId.of("America/Sao_Paulo"))));
+        boolean activeContracts = contracts.findByOrderClientIdOrderBySignedAtDesc(user.id).stream()
+                .anyMatch(c -> RentalDates.endExclusive(c.order.startDate,c.order.endDate).isAfter(RentalDates.today()));
         if (activeOrders || activeContracts) throw ApiException.conflict("Cancele os pedidos em aberto e aguarde o encerramento dos contratos antes de excluir sua conta.");
         // Exclui os dados pessoais e desativa a identidade, preservando a integridade do histórico contratual.
-        user.active = false; user.username = "deleted." + user.id; user.name = "Cliente removido";
+        user.active = false; user.username = "$deleted$" + user.id; user.name = "Cliente removido";
         user.passwordHash = passwords.encode(UUID.randomUUID().toString()); user.cpf = null; user.rg = null;
         user.address = null; user.profession = null; user.employments.clear(); users.saveAndFlush(user);
     }
@@ -112,7 +125,8 @@ public class AuthService {
         user.employments.clear(); employmentInputs.forEach(e -> user.employments.add(new Employment(e.employer().trim(),e.income())));
     }
     private static void required(String value, int max, String label) {
-        if (value == null || value.isBlank() || value.length() > max) throw ApiException.badRequest(label + " é obrigatório e deve conter até " + max + " caracteres.");
+        if (value == null || value.isBlank() || value.length() > max || value.indexOf('\0') >= 0)
+            throw ApiException.badRequest(label + " é obrigatório e deve conter até " + max + " caracteres válidos.");
     }
     public static boolean validCpf(String cpf) {
         if (cpf == null || !cpf.matches("\\d{11}") || cpf.chars().distinct().count() == 1) return false;
