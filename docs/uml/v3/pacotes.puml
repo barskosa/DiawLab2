@@ -1,0 +1,98 @@
+@startuml
+!pragma layout smetana
+title Rota — pacotes e MVC revisados em 03–04/11/2026 (v3)
+skinparam shadowing false
+skinparam backgroundColor #FAFBFC
+
+package "Construção dinâmica de páginas web\nfrontend/src — View" as Front {
+  component "App.jsx" as App
+  component "Auth.jsx" as Auth
+  component "forms.jsx" as Forms
+  component "components.jsx" as Components
+  component "ClientFinancialSummary.jsx" as FinancialSummary
+  component "api.js" as Api
+  App --> Auth
+  App --> Forms
+  App --> Components
+  App --> FinancialSummary
+  App --> Api
+  Auth --> Forms
+  Auth --> Components
+  Auth --> Api
+  Forms --> Components
+  Forms --> FinancialSummary
+  FinancialSummary --> Components
+  FinancialSummary --> Api
+}
+package "Gestão de pedidos e contratos\nbackend/src/main/java/br/com/rota" as Back {
+  package controller {
+    component "AuthController" as AuthController
+    component "ClientController" as ClientController
+    component "VehicleController" as VehicleController
+    component "OrderController" as OrderController
+    component "ContractController" as ContractController
+  }
+  package service {
+    component "AuthService" as AuthService
+    component "RentalService" as RentalService
+    component "RentalDates" as RentalDates
+    RentalService --> AuthService
+    RentalService --> RentalDates
+    AuthService --> RentalDates
+  }
+  package model {
+    component "AppUser / Employment" as Users
+    component "Vehicle / RentalOrder / RentalContract" as Models
+    component "Role / OrderStatus" as Enums
+  }
+  package repository {
+    component "UserRepository" as UserRepository
+    component "VehicleRepository / OrderRepository / ContractRepository" as Repositories
+  }
+  package dto {
+    component "ApiDtos" as Dtos
+  }
+  package config {
+    component "SecurityConfig" as Security
+  }
+  package exception {
+    component "ApiException / ApiExceptionHandler" as Errors
+  }
+}
+database "Supabase PostgreSQL\nesquema rental" as Db
+component "Flyway — db/migration\nV1: estrutura inicial\nV2: condições contratuais preservadas" as Flyway
+
+Api --> controller : HTTP JSON + sessão + CSRF
+Security ..> controller : filtros e sessão
+controller ..> Dtos
+AuthController --> AuthService
+ClientController --> AuthService
+VehicleController --> RentalService
+VehicleController --> AuthService
+OrderController --> RentalService
+ContractController --> RentalService
+service ..> Dtos
+service --> model
+service --> repository
+service ..> Errors
+repository --> model
+repository --> Db : JDBC / SSL
+Flyway --> Db : migrações versionadas
+
+note bottom of Front
+  Autenticação e resumo financeiro chamam api.js.
+  Formulários recebem callbacks do App;
+  components.jsx não acessa a API.
+  Requisições obsoletas são canceladas.
+end note
+note bottom of AuthService
+  Principal de sessão: UUID imutável.
+  Bloqueio do cadastro serializa exclusão,
+  alteração de perfil e criação de pedido.
+end note
+note bottom of RentalService
+  Autorização, cálculo, parecer e contratos.
+  Bloqueio do veículo evita períodos conflitantes.
+  Contrato copia condições e nomes das partes.
+end note
+@enduml

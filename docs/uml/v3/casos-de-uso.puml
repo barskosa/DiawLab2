@@ -1,0 +1,85 @@
+@startuml
+!pragma layout smetana
+title Rota — casos de uso revisados em 03–04/11/2026 (v3)
+left to right direction
+skinparam shadowing false
+skinparam backgroundColor #FAFBFC
+skinparam actorStyle awesome
+
+actor Visitante
+actor "Usuário autenticado" as User
+actor Cliente
+actor Agente
+actor Empresa
+actor Banco
+Cliente --|> User
+Agente --|> User
+Empresa --|> Agente
+Banco --|> Agente
+
+rectangle "Rota — React + Spring MVC" {
+  usecase "Cadastrar cliente" as RegisterClient
+  usecase "Cadastrar agente com código" as RegisterAgent
+  usecase "Entrar com usuário e senha" as Login
+  usecase "Encerrar sessão" as Logout
+  usecase "Consultar e editar perfil" as Profile
+  usecase "Excluir próprio cadastro" as Delete
+  usecase "Consultar e editar clientes" as Clients
+  usecase "Consultar frota" as FleetRead
+  usecase "Cadastrar, editar e excluir veículo" as FleetManage
+  usecase "Criar pedido" as Create
+  usecase "Consultar pedidos e pareceres" as Read
+  usecase "Editar pedido e reabrir análise" as Update
+  usecase "Cancelar pedido próprio" as Cancel
+  usecase "Consultar identificação,\nempregadores e rendimentos" as FinancialData
+  usecase "Aprovar ou rejeitar com parecer" as Review
+  usecase "Executar contrato aprovado" as Contract
+  usecase "Registrar proprietário" as Owner
+  usecase "Conceder crédito próprio" as Credit
+  usecase "Consultar contratos e\ncondições preservadas" as Contracts
+}
+
+Visitante --> RegisterClient
+Visitante --> RegisterAgent
+Visitante --> Login
+User --> Logout
+User --> FleetRead
+User --> Read
+User --> Contracts
+Cliente --> Profile
+Cliente --> Delete
+Cliente --> Create
+Cliente --> Update
+Cliente --> Cancel
+Agente --> Clients
+Agente --> FleetManage
+Agente --> Update
+Agente --> FinancialData
+Agente --> Review
+Agente --> Contract
+Review ..> FinancialData : <<include>>
+Contract ..> Owner : <<include>>
+Credit ..> Contract : <<extend>>
+Banco --> Credit
+
+note right of Read
+  Cliente: somente seus registros.
+  Agentes: pedidos necessários à gestão.
+end note
+note right of FinancialData
+  Dados informados pelo cliente;
+  renda total e proporção do aluguel.
+  O parecer é decisão do agente.
+end note
+note right of Contract
+  Pedido aprovado, transação e bloqueios.
+  Copia dados do veículo e nomes das partes
+  para preservar as condições do contrato.
+end note
+note bottom of Delete
+  Bloqueada com compromissos ativos.
+  Desativa e anonimiza o cadastro;
+  nomes já registrados em contratos
+  permanecem no histórico contratual.
+end note
+@enduml

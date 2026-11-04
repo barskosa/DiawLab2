@@ -1,0 +1,114 @@
+@startuml
+!pragma layout smetana
+title Rota — classes persistidas revisadas em 03–04/11/2026 (v3)
+skinparam shadowing false
+skinparam backgroundColor #FAFBFC
+hide circle
+
+package "br.com.rota.model" {
+  enum Role {
+    CLIENT
+    COMPANY
+    BANK
+  }
+  enum OrderStatus {
+    PENDING
+    APPROVED
+    REJECTED
+    CONTRACTED
+    CANCELLED
+  }
+  class AppUser <<Entity>> {
+    id: UUID
+    username: String
+    passwordHash: String
+    name: String
+    role: Role
+    rg: String
+    cpf: String
+    address: String
+    profession: String
+    active: boolean
+    version: long
+  }
+  class Employment <<Embeddable>> {
+    employer: String
+    income: BigDecimal
+  }
+  class Vehicle <<Entity>> {
+    id: UUID
+    registration: String
+    year: int
+    brand: String
+    model: String
+    plate: String
+    dailyRate: BigDecimal
+    category: String
+    version: long
+  }
+  class RentalOrder <<Entity>> {
+    id: UUID
+    startDate: LocalDate
+    endDate: LocalDate
+    totalAmount: BigDecimal
+    status: OrderStatus
+    notes: String
+    reviewNotes: String
+    createdAt: Instant
+    version: long
+  }
+  class RentalContract <<Entity>> {
+    id: UUID
+    signedAt: Instant
+    creditAmount: BigDecimal [0..1]
+    interestRate: BigDecimal [0..1]
+    installments: Integer [0..1]
+    .. Dados preservados na contratação ..
+    snapshotVehicleRegistration: String
+    snapshotVehicleYear: int
+    snapshotVehicleBrand: String
+    snapshotVehicleModel: String
+    snapshotVehiclePlate: String
+    snapshotVehicleDailyRate: BigDecimal
+    snapshotVehicleCategory: String
+    snapshotClientName: String
+    snapshotOwnerName: String
+    snapshotBankName: String [0..1]
+  }
+}
+
+AppUser --> Role
+AppUser "1" *-- "0..3" Employment : employments
+AppUser "1" <-- "0..*" Vehicle : owner
+AppUser "1" <-- "0..*" RentalOrder : client
+AppUser "0..1" <-- "0..*" RentalOrder : reviewedBy
+Vehicle "1" <-- "0..*" RentalOrder : vehicle
+RentalOrder --> OrderStatus
+RentalOrder "1" <-- "0..1" RentalContract : order
+AppUser "1" <-- "0..*" RentalContract : owner
+AppUser "0..1" <-- "0..*" RentalContract : bank
+
+note right of AppUser
+  CLIENT: identificação e empregadores.
+  COMPANY/BANK: agentes.
+  A sessão identifica o usuário pelo UUID.
+  Exclusão desativa e anonimiza o cadastro.
+end note
+note right of Employment
+  @ElementCollection: tabela employments.
+  Máximo 3 validado no serviço e banco.
+end note
+note bottom of RentalContract
+  Crédito opcional e concedido pelo próprio BANK.
+  Os nomes e dados do veículo são copiados;
+  editar cadastro/frota não reescreve o contrato.
+  V2 da migração preenche contratos anteriores
+  com os dados conhecidos na sua aplicação.
+end note
+note bottom of Vehicle
+  Vehicle.owner é a propriedade corrente.
+  RentalContract.owner e snapshotOwnerName
+  identificam a propriedade da contratação.
+  A diária preservada é a negociada no pedido.
+end note
+@enduml

@@ -8,7 +8,7 @@ Projeto acadêmico do **Laboratório 02 de Desenvolvimento e Integração de Apl
 
 ## Status do projeto
 
-Código da aplicação e documentação disponíveis neste repositório. Back-end compilado com JDK 25, **20 testes aprovados** e conexão real com PostgreSQL no Supabase validada localmente. Cada instalação precisa de suas próprias credenciais em `backend/.env`. O Flyway cria as tabelas; as contas e os automóveis são cadastrados pela interface.
+Código da aplicação e documentação disponíveis neste repositório. Back-end compilado com JDK 25, **30 testes Java e 10 testes do cliente HTTP aprovados**, além de verificação da API no PostgreSQL real do Supabase. Cada instalação precisa de suas próprias credenciais em `backend/.env`. O Flyway cria as tabelas; as contas e os automóveis são cadastrados pela interface.
 
 ## Índice
 
@@ -44,7 +44,7 @@ Código da aplicação e documentação disponíveis neste repositório. Back-en
 
 O Rota centraliza o processo de aluguel de automóveis: cadastro do contratante, solicitação de período e veículo, parecer financeiro de um agente e emissão de contrato quando aprovado. Clientes, empresas e bancos acessam o mesmo servidor pela aplicação React, com permissões verificadas pelo Spring Boot.
 
-O escopo segue o enunciado do Laboratório 02. As decisões complementares necessárias à implementação, como regras de datas e de transição de status, estão identificadas em [Requisitos](docs/REQUISITOS.md). Os modelos conceituais e os modelos correspondentes ao código estão preservados separadamente em `docs/uml/v1` e `docs/uml/v2`.
+O escopo segue o enunciado do Laboratório 02. As decisões complementares necessárias à implementação, como regras de datas e de transição de status, estão identificadas em [Requisitos](docs/REQUISITOS.md). Os modelos estão preservados em três versões: conceito em `docs/uml/v1`, primeira implementação em `docs/uml/v2` e revisão do código atual em `docs/uml/v3`.
 
 ## Atendimento ao enunciado
 
@@ -53,18 +53,18 @@ O enunciado estabelece três critérios de avaliação: **adequação aos requis
 | Requisito ou entregável | Implementação e evidência |
 | --- | --- |
 | Java 25, Spring Boot 4.0.x e Maven | [pom.xml](backend/pom.xml), Maven Wrapper e API compilada com JDK 25 |
-| React + Vite, PostgreSQL/Supabase e MVC | [Front-end](frontend/package.json), [configuração JDBC e Flyway](backend/src/main/resources/application.properties) e [diagrama de pacotes MVC](docs/uml/v2/pacotes.svg); conexão real com Supabase validada |
+| React + Vite, PostgreSQL/Supabase e MVC | [Front-end](frontend/package.json), [configuração JDBC e Flyway](backend/src/main/resources/application.properties) e [diagrama de pacotes MVC atual](docs/uml/v3/pacotes.svg); conexão real com Supabase validada |
 | Cadastro e login obrigatório para clientes e agentes | [AuthController](backend/src/main/java/br/com/rota/controller/AuthController.java), [SecurityConfig](backend/src/main/java/br/com/rota/config/SecurityConfig.java) e testes HTTP de sessão, credenciais e autorização |
 | CRUD de cliente e identificação completa | [ClientController](backend/src/main/java/br/com/rota/controller/ClientController.java) e [AuthService](backend/src/main/java/br/com/rota/service/AuthService.java); nome, CPF, RG, endereço, profissão e até três vínculos com empregador e rendimento |
 | Criar, consultar, modificar e cancelar pedidos; acompanhar status | [OrderController](backend/src/main/java/br/com/rota/controller/OrderController.java), páginas React e testes de criação, edição, cancelamento e isolamento entre clientes |
-| Agentes modificam e avaliam pedidos; parecer positivo antes do contrato | [RentalService](backend/src/main/java/br/com/rota/service/RentalService.java); testes de análise financeira, invalidação do parecer após edição e bloqueio de contratação sem aprovação |
+| Agentes modificam e avaliam pedidos; parecer positivo antes do contrato | [RentalService](backend/src/main/java/br/com/rota/service/RentalService.java) e [resumo financeiro do cliente](frontend/src/ClientFinancialSummary.jsx); consulta de identificação/rendimentos, registro do parecer e bloqueio de contratação sem aprovação |
 | Automóveis e propriedade de cliente, empresa ou banco | [Vehicle](backend/src/main/java/br/com/rota/model/Vehicle.java) e [RentalContract](backend/src/main/java/br/com/rota/model/RentalContract.java); matrícula, ano, marca, modelo, placa e titularidade definida na contratação |
 | Contrato de crédito opcional concedido por banco agente | Associação ao banco, valor, juros e parcelas em `RentalContract`; teste que restringe a concessão ao próprio banco autenticado |
 | Casos de uso, histórias, classes e pacotes | [Modelos UML](docs/MODELAGEM.md) em fontes PlantUML e SVG, além das [histórias de usuário com critérios de aceite](docs/HISTORIAS-USUARIO.md) |
-| Comparação dos modelos iniciais com o código final | Versões `v1` e `v2` preservadas; [comparação das versões e justificativas](docs/MODELAGEM.md#comparação-das-versões-e-justificativas) explica as decisões de implementação |
-| Qualidade e demonstração do protótipo | **20 testes aprovados**, build React concluído, verificações no navegador, capturas de tela e [roteiro de apresentação](docs/ROTEIRO-APRESENTACAO.md) |
+| Comparação dos modelos iniciais com o código final | Versões `v1`, `v2` e `v3` preservadas; [comparação das versões](docs/MODELAGEM.md#comparação-das-versões-e-justificativas) e [revisão de 3–4 de novembro de 2026](docs/MODELAGEM.md#versão-3--revisão-do-código-e-dos-modelos) relacionam os ajustes ao código |
+| Qualidade e demonstração do protótipo | **30 testes Java e 10 do cliente HTTP aprovados**, verificação adicional em PostgreSQL/Supabase, build React, verificações no navegador, capturas de tela e [roteiro de apresentação](docs/ROTEIRO-APRESENTACAO.md) |
 
-A [matriz de rastreabilidade](docs/REQUISITOS.md) detalha os requisitos funcionais, a stack exigida, as permissões e as decisões complementares. As suítes [RentalFlowTest](backend/src/test/java/br/com/rota/RentalFlowTest.java) e [HttpSecurityTest](backend/src/test/java/br/com/rota/HttpSecurityTest.java) permitem reproduzir as verificações das regras de negócio e da API.
+A [matriz de rastreabilidade](docs/REQUISITOS.md) relaciona os requisitos a arquivos e métodos de teste. As suítes [RentalFlowTest](backend/src/test/java/br/com/rota/RentalFlowTest.java), [HttpSecurityTest](backend/src/test/java/br/com/rota/HttpSecurityTest.java), [ConcurrentRentalTest](backend/src/test/java/br/com/rota/ConcurrentRentalTest.java) e [ContractMigrationTest](backend/src/test/java/br/com/rota/ContractMigrationTest.java) verificam regras de negócio, API, concorrência e evolução do banco.
 
 ## Funcionalidades principais
 
@@ -76,6 +76,7 @@ A [matriz de rastreabilidade](docs/REQUISITOS.md) detalha os requisitos funciona
 - Edição de pedidos e avaliação financeira com parecer por empresas e bancos.
 - Contratação somente após aprovação, com propriedade vinculada a cliente, empresa ou banco.
 - Crédito opcional concedido pelo banco autenticado, registrando valor, taxa e parcelas no contrato.
+- Preservação das condições do contrato e dos nomes das partes, mesmo após alterações no cadastro ou na frota.
 - Separação de acesso entre clientes e agentes, validação no servidor e prevenção de aluguéis contratados em períodos conflitantes.
 
 ## Tecnologias utilizadas
@@ -113,13 +114,13 @@ Clientes e agentes são representados por `AppUser` com papel `CLIENT`, `COMPANY
 
 ### Modelos UML
 
-| Modelo | Versão conceitual | Versão correspondente ao código |
-| --- | --- | --- |
-| Casos de uso | [Diagrama v1](docs/uml/v1/casos-de-uso.svg) | [Diagrama v2](docs/uml/v2/casos-de-uso.svg) |
-| Classes | [Diagrama v1](docs/uml/v1/classes.svg) | [Diagrama v2](docs/uml/v2/classes.svg) |
-| Pacotes / visão lógica | [Diagrama v1](docs/uml/v1/pacotes.svg) | [Diagrama v2](docs/uml/v2/pacotes.svg) |
+| Modelo | Conceito — v1 | Primeira implementação — v2 | Código atual — v3 |
+| --- | --- | --- | --- |
+| Casos de uso | [Diagrama v1](docs/uml/v1/casos-de-uso.svg) | [Diagrama v2](docs/uml/v2/casos-de-uso.svg) | [Diagrama v3](docs/uml/v3/casos-de-uso.svg) |
+| Classes | [Diagrama v1](docs/uml/v1/classes.svg) | [Diagrama v2](docs/uml/v2/classes.svg) | [Diagrama v3](docs/uml/v3/classes.svg) |
+| Pacotes / visão lógica | [Diagrama v1](docs/uml/v1/pacotes.svg) | [Diagrama v2](docs/uml/v2/pacotes.svg) | [Diagrama v3](docs/uml/v3/pacotes.svg) |
 
-As fontes editáveis estão nas mesmas pastas dos diagramas. A comparação documenta a centralização das credenciais em `AppUser`, os vínculos profissionais em `Employment`, a relação entre pedido e contrato e a representação do crédito opcional. O front-end corresponde ao subsistema de páginas web; o back-end concentra a gestão de pedidos e contratos.
+As fontes editáveis estão nas mesmas pastas dos diagramas. A comparação documenta a centralização das credenciais em `AppUser`, os vínculos em `Employment`, a relação entre pedido e contrato e o crédito opcional. A revisão `v3` registra as condições preservadas no contrato, a identidade de sessão por UUID e as dependências reais da análise financeira na interface. O front-end corresponde ao subsistema de páginas web; o back-end concentra a gestão de pedidos e contratos. As revisões decorrem da implementação e da auditoria do código; nenhum feedback de aula foi atribuído ao professor sem ter sido fornecido.
 
 ## Instalação e execução
 
@@ -149,7 +150,7 @@ DB_URL=jdbc:postgresql://SEU_HOST_DO_POOLER:5432/postgres?sslmode=require
 DB_USERNAME=postgres.SEU_PROJECT_REF
 DB_PASSWORD=SUA_SENHA_DO_BANCO
 APP_AGENT_REGISTRATION_CODE=ESCOLHA_UM_CODIGO_PRIVADO
-FRONTEND_ORIGIN=http://localhost:5173,http://localhost:5174
+FRONTEND_ORIGIN=http://localhost:5173,http://localhost:5174,http://localhost:4173
 ```
 
 Copie host e usuário do seu próprio projeto; `DB_PASSWORD` recebe a senha do banco PostgreSQL. Use o Session pooler na porta `5432` com `sslmode=require`. O arquivo é carregado como Java Properties: use `CHAVE=valor`, sem aspas externas; uma barra invertida no valor deve ser escapada como `\\`. Inicie a API dentro de `backend`, onde está o `.env`.
@@ -170,7 +171,7 @@ As dependências Java são baixadas automaticamente pelo Wrapper ao testar ou in
 
 ### Inicialização do banco de dados
 
-Após preencher `backend/.env`, o Flyway cria o esquema `rental` e aplica as migrações no primeiro início. O Hibernate valida as tabelas contra as entidades. Use um projeto Supabase destinado ao trabalho; as migrações não inserem contas ou veículos fictícios.
+Após preencher `backend/.env`, o Flyway cria o esquema `rental` e aplica as migrações pendentes. A V1 cria a estrutura inicial; a V2 acrescenta as cópias das condições contratuais e preenche contratos anteriores com os dados conhecidos no momento da migração. O Hibernate valida as tabelas contra as entidades. Use um projeto Supabase destinado ao trabalho; as migrações não inserem contas ou veículos fictícios.
 
 ### Como executar a aplicação
 
@@ -207,6 +208,14 @@ Dentro de `frontend`, gere os arquivos estáticos:
 npm.cmd run build
 ```
 
+Para conferir esse build localmente, mantenha a API em execução e, dentro de `frontend`, use:
+
+```powershell
+npm.cmd run preview
+```
+
+A pré-visualização abre em **http://localhost:4173** por padrão e encaminha `/api` ao Spring em `8080`. Essa origem está incluída na configuração local apresentada acima.
+
 Dentro de `backend`, gere o executável:
 
 ```powershell
@@ -241,6 +250,7 @@ frontend/
 docs/
   uml/v1/                     Modelagem conceitual inicial
   uml/v2/                     Modelagem alinhada à implementação
+  uml/v3/                     Revisão atual: contratos, análise e MVC
   API-CONTRACT.md             Endpoints e dados
   HISTORIAS-USUARIO.md        Histórias com critérios de aceite
   MODELAGEM.md                Diagramas e decisões de modelagem
@@ -250,7 +260,7 @@ docs/
 
 ## Contas de demonstração
 
-As contas abaixo foram preparadas na base Supabase utilizada para a apresentação, com dados fictícios e senha de teste publicada para avaliação do projeto. Os três acessos foram verificados em **3 de novembro de 2026**.
+As contas abaixo foram preparadas na base Supabase utilizada para a apresentação, com dados fictícios e senha de teste publicada para avaliação do projeto. Os três acessos foram verificados em **4 de novembro de 2026**, após a atualização do banco para a migração V2.
 
 | Papel | Usuário | Senha | O que avaliar |
 | --- | --- | --- | --- |
@@ -286,11 +296,11 @@ Na base de apresentação, o cliente `cliente.teste` possui quatro pedidos ident
 | 24 a 27/11/2026 | Aprovado | Agente pode executar o contrato; editar o pedido exige nova análise |
 | 1 a 3/12/2026 | Cancelado | Consultar o histórico de cancelamento |
 
-Os estados acima representam a preparação de **3 de novembro de 2026**. As ações realizadas durante a avaliação alteram esses registros.
+Os estados acima foram preparados em **3 de novembro de 2026** e reconferidos sem alterações em **4 de novembro de 2026**. As ações realizadas durante a avaliação alteram esses registros.
 
 ### Galeria da aplicação
 
-As **12 capturas**, realizadas em **3 de novembro de 2026**, mostram a aplicação em execução normal: React, API Java e **PostgreSQL real no Supabase**, com dados fictícios cadastrados pelos fluxos da aplicação. Clique em qualquer imagem ou em **Abrir imagem** para visualizar a captura completa.
+As **12 capturas**, atualizadas em **4 de novembro de 2026**, mostram a aplicação em execução normal: React, API Java e **PostgreSQL real no Supabase**, já com a migração V2, usando dados fictícios cadastrados pelos fluxos da aplicação. Clique em qualquer imagem ou em **Abrir imagem** para visualizar a captura completa.
 
 | Login | Cadastro de cliente |
 | --- | --- |
@@ -330,24 +340,60 @@ No diretório `backend`:
 .\mvnw.cmd test
 ```
 
-O perfil `test` usa H2 isolado em modo PostgreSQL, aplica as migrações Flyway e valida as entidades, sem requerer credenciais do Supabase. A execução local em **2 de novembro de 2026**, com JDK 25, terminou com **20 testes, zero falhas e zero erros**:
+O perfil `test` usa H2 isolado em modo PostgreSQL, aplica as migrações Flyway e valida as entidades, sem requerer credenciais do Supabase. Os relatórios da execução concluída em **3 de novembro de 2026, às 23h55 (horário de Brasília)**, com JDK 25, registram **30 testes, zero falhas e zero erros**:
 
 | Suíte | Quantidade | Comportamentos verificados |
 | --- | --- | --- |
-| `RentalFlowTest` | 12 | Cadastro/CPF/vínculos, perfis, permissões, pedidos, pareceres, cancelamento, contrato, crédito e períodos conflitantes |
-| `HttpSecurityTest` | 8 | API HTTP real, sessão/CSRF, login/logout, convites, validação, isolamento e ciclo completo até contrato com crédito em requisições independentes |
+| `RentalFlowTest` | 16 | Cadastro, perfis, ambos os tipos de agente, pedidos, pareceres, cancelamento, propriedade, crédito, condições preservadas e encerramento do aluguel |
+| `HttpSecurityTest` | 11 | API HTTP, sessão/CSRF, login/logout, convites, validação, isolamento, reutilização de nome de usuário, limites de dados e respostas HTTP |
+| `ConcurrentRentalTest` | 2 | Contratações simultâneas do mesmo veículo e concorrência entre exclusão do cliente e criação de pedido |
+| `ContractMigrationTest` | 1 | Atualização V1 → V2 com contratos existentes, preenchimento das condições e rejeição de crédito incompleto |
 
-H2 permite testar as regras e as migrações em isolamento. Também foi validada a execução normal com **PostgreSQL real no Supabase**, incluindo aplicação da migração V1, validação das entidades pelo Hibernate e consulta de autenticação pela interface com sessão/CSRF. Essa verificação de conexão é adicional à suíte de 20 testes em H2.
+Além da suíte em H2, a API foi exercitada em **PostgreSQL 17 real no Supabase**, usando um esquema temporário isolado. A aplicação das migrações V1/V2 e a validação das entidades pelo Hibernate foram conferidas antes de **14 grupos de verificação pela API**:
+
+| Grupo | Verificação no PostgreSQL/Supabase |
+| --- | --- |
+| 1 | Acesso anônimo bloqueado e proteção CSRF |
+| 2 | Cadastro e autenticação dos três papéis |
+| 3 | CRUD de cliente, até três rendimentos e isolamento entre identidades |
+| 4 | Cadastro, consulta, edição e exclusão de automóveis |
+| 5 | Cálculo do aluguel, edição com nova análise e contratação |
+| 6 | Cancelamento e rejeição de pedidos |
+| 7 | Propriedade de cliente, empresa e banco; crédito concedido pelo próprio banco |
+| 8 | Datas, períodos adjacentes e bloqueio de exclusão com compromisso ativo |
+| 9 | Contrato preservado após alteração de perfil e frota |
+| 10 | Contratações concorrentes: uma resposta 201 e outra 409 para o período disputado |
+| 11 | Sessão antiga sem acesso a uma nova conta que reutiliza o nome de usuário |
+| 12 | Concorrência entre exclusão de cliente e criação de pedido |
+| 13 | Respostas 404, 405 e 415 para rota, método e formato inválidos |
+| 14 | Logout e encerramento do acesso |
+
+A migração V2 também foi aplicada à base Supabase de apresentação em **4 de novembro de 2026**, com dados preexistentes. A comparação das respostas JSON antes e depois confirmou a preservação dos mesmos IDs e conteúdos dos **quatro pedidos, um contrato, um automóvel e três contas de demonstração**. Os três logins foram novamente validados após a atualização. O acesso pelo build em **http://localhost:4173** também foi conferido com login real, proxy da API e CORS.
 
 No diretório `frontend`:
 
 ```powershell
+npm.cmd test
 npm.cmd run build
 ```
 
-O build da interface foi concluído. O [roteiro de apresentação](docs/ROTEIRO-APRESENTACAO.md) também lista cenários de validação manual de autorização, cancelamento, dados obrigatórios e limite de rendimentos. Os resultados acima distinguem a suíte automatizada em H2 da verificação adicional com o PostgreSQL real no Supabase.
+Os **10 testes do cliente HTTP**, executados pelo Node.js em [api.test.js](frontend/test/api.test.js), foram aprovados na revisão de **4 de novembro de 2026**. Eles verificam cookies de sessão, renovação de CSRF, respostas 401, cancelamento de requisições obsoletas, erros associados aos campos, falha de rede, resposta 204 e rejeição de uma página HTML recebida no lugar de JSON. Esses testes substituem as respostas de rede para exercitar o cliente HTTP em isolamento.
+
+O build da interface também foi concluído. O [roteiro de apresentação](docs/ROTEIRO-APRESENTACAO.md) lista os cenários para demonstração e repetição manual na base de apresentação.
 
 A verificação em Chromium também confirmou cadastro de banco e cliente, cadastro de automóvel, criação e edição de pedido, cancelamento, parecer financeiro e execução de contrato com crédito, usando a API real em ambiente isolado de testes. As cinco páginas do cliente foram verificadas em larguras de **320, 425, 768 e 1440 px**, sem rolagem horizontal no documento e sem erros JavaScript. Tabelas extensas mantêm rolagem dentro do próprio componente.
+
+Na revisão de **3–4 de novembro de 2026**, a interface também passou por **104 verificações no navegador**, cobrindo os três perfis e quatro larguras, e cinco cenários de falha controlada para sessão expirada, validação, requisições obsoletas e foco. Os textos críticos medidos apresentaram contraste mínimo de **4,55:1**; essa medição corresponde aos elementos examinados na revisão.
+
+Uma verificação adicional da interface conectada ao PostgreSQL real cobriu **cinco grupos**, com chamadas efetivas à API:
+
+- Resumo financeiro com três rendimentos e soma mensal de R$ 6.300,00.
+- Perfil de cliente sem acesso ao resumo financeiro de outras pessoas.
+- Cinco páginas do cliente em quatro larguras de tela.
+- Menu móvel com navegação por Tab, conteúdo externo inativo, contenção de foco e fechamento por Escape.
+- Sessão encerrada fora da interface, seguida de limpeza dos dados e retorno ao login.
+
+Esses grupos verificaram a integração com a API. Os cinco cenários de falha controlada mencionados acima utilizaram interceptações de respostas no navegador.
 
 ## Documentações utilizadas
 

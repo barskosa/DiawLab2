@@ -34,6 +34,7 @@ Critérios de aceite:
 4. Depois de sair, a sessão anterior não permite consultar recursos protegidos.
 5. Requisição de escrita sem token CSRF válido é recusada.
 6. Um cliente não acessa dados de outro cliente ao trocar IDs na URL ou no corpo de uma requisição.
+7. A sessão permanece vinculada à identidade original por UUID. Se uma conta for excluída e seu nome de usuário for reutilizado, uma sessão antiga não acessa a nova conta.
 
 ## HU03 — Manter cadastro do cliente e rendimentos
 
@@ -46,7 +47,8 @@ Critérios de aceite:
 3. A tentativa de enviar um quarto vínculo é recusada pelo servidor.
 4. Cada vínculo contém entidade empregadora e valor de rendimento válido.
 5. A exclusão é impedida quando há pedido pendente/aprovado ou contrato vigente.
-6. Quando permitida, a exclusão encerra o acesso e remove os dados pessoais do cadastro ativo, preservando referências históricas necessárias.
+6. Quando permitida, a exclusão encerra o acesso e anonimiza o cadastro, preservando referências históricas e os nomes já registrados em contratos.
+7. A exclusão e a criação de pedido do mesmo cliente são serializadas; um pedido não é criado para uma conta desativada por uma operação concorrente.
 
 **Como agente**, quero consultar e atualizar os dados de clientes para apoiar a análise dos pedidos.
 
@@ -98,7 +100,7 @@ Critérios de aceite:
 
 Critérios de aceite:
 
-1. O agente consulta pedidos e dados do cliente necessários à análise.
+1. O agente consulta identificação, profissão, empregadores, rendimentos e renda mensal total nos detalhes e na avaliação do pedido, sem precisar editar o cadastro.
 2. Para pedido `PENDING`, o agente registra aprovação ou rejeição acompanhada do parecer.
 3. O servidor registra o responsável pela análise e o status `APPROVED` ou `REJECTED`.
 4. Um cliente não emite parecer, mesmo chamando a API diretamente.
@@ -118,6 +120,7 @@ Critérios de aceite:
 5. O pedido passa para `CONTRACTED` e o contrato fica disponível ao titular e aos agentes.
 6. A contratação revalida disponibilidade do automóvel sob transação/bloqueio; dois pedidos conflitantes não são contratados para o mesmo período.
 7. Contrato sem crédito é permitido.
+8. Na contratação, os dados do veículo, a diária negociada e os nomes do cliente, proprietário e banco são copiados para o contrato. Alterações posteriores do cadastro ou da frota não alteram as condições apresentadas nesse documento.
 
 ## HU09 — Manter frota
 
