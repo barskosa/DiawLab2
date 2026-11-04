@@ -1,4 +1,27 @@
-import { useEffect, useId, useRef, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
+
+export const FormFeedbackContext = createContext({ fieldErrors: {} });
+
+export function useMediaQuery(query) {
+  const [matches, setMatches] = useState(
+    () => window.matchMedia(query).matches,
+  );
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    const update = () => setMatches(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, [query]);
+  return matches;
+}
 
 const paths = {
   grid: (
@@ -160,7 +183,7 @@ export function Status({ value }) {
 }
 export function ErrorMessage({ error }) {
   return error ? (
-    <div className="error-box" role="alert">
+    <div className="error-box" role="alert" tabIndex={-1}>
       <Icon name="info" size={18} />
       <div>
         {error.message || error}
@@ -175,35 +198,65 @@ export function ErrorMessage({ error }) {
     </div>
   ) : null;
 }
-export function Field({ label, hint, className = "", children }) {
+export function Field({ label, hint, name, className = "", children }) {
   const id = useId();
+  const { fieldErrors } = useContext(FormFeedbackContext);
+  const error = fieldErrors?.[name];
+  const accessibility = {
+    "aria-describedby":
+      [hint && `${id}-hint`, error && `${id}-error`]
+        .filter(Boolean)
+        .join(" ") || undefined,
+    "aria-invalid": error ? true : undefined,
+  };
   return (
     <div className={`field ${className}`}>
       <label htmlFor={id}>{label}</label>
-      {typeof children === "function" ? children(id) : children}
-      {hint && <small>{hint}</small>}
+      {typeof children === "function" ? children(id, accessibility) : children}
+      {hint && <small id={`${id}-hint`}>{hint}</small>}
+      {error && (
+        <small id={`${id}-error`} className="field-error">
+          {error}
+        </small>
+      )}
     </div>
   );
 }
-export function TextField({ label, hint, className, ...props }) {
+export function TextField({ label, hint, className, name, ...props }) {
   return (
-    <Field label={label} hint={hint} className={className}>
-      {(id) => <input id={id} {...props} />}
+    <Field label={label} hint={hint} name={name} className={className}>
+      {(id, accessibility) => (
+        <input id={id} name={name} {...accessibility} {...props} />
+      )}
     </Field>
   );
 }
-export function SelectField({ label, hint, className, children, ...props }) {
+export function SelectField({
+  label,
+  hint,
+  className,
+  name,
+  children,
+  ...props
+}) {
   return (
-    <Field label={label} hint={hint} className={className}>
-      {(id) => (
-        <select id={id} {...props}>
+    <Field label={label} hint={hint} name={name} className={className}>
+      {(id, accessibility) => (
+        <select id={id} name={name} {...accessibility} {...props}>
           {children}
         </select>
       )}
     </Field>
   );
 }
-export function Modal({ title, description, onClose, children, wide = false }) {
+export function Modal({
+  title,
+  description,
+  onClose,
+  children,
+  wide = false,
+  busy = false,
+}) {
   const ref = useRef(null);
   const titleId = useId();
   useEffect(() => {
@@ -216,9 +269,9 @@ export function Modal({ title, description, onClose, children, wide = false }) {
         previous instanceof HTMLElement &&
         previous.isConnected &&
         previous !== document.body &&
-        !previous.closest('dialog')
+        !previous.closest("dialog")
           ? previous
-          : document.getElementById('main-content');
+          : document.getElementById("main-content");
       destination?.focus({ preventScroll: true });
     };
   }, []);
@@ -227,24 +280,27 @@ export function Modal({ title, description, onClose, children, wide = false }) {
       ref={ref}
       className={`modal ${wide ? "modal-wide" : ""}`}
       aria-labelledby={titleId}
+      aria-describedby={description ? `${titleId}-description` : undefined}
+      aria-busy={busy}
       onCancel={(event) => {
         event.preventDefault();
-        onClose();
+        if (!busy) onClose();
       }}
       onClick={(event) => {
-        if (event.target === ref.current) onClose();
+        if (!busy && event.target === ref.current) onClose();
       }}
     >
       <div className="modal-inner">
         <div className="modal-header">
           <div>
             <h2 id={titleId}>{title}</h2>
-            {description && <p>{description}</p>}
+            {description && <p id={`${titleId}-description`}>{description}</p>}
           </div>
           <button
             className="icon-button"
             aria-label="Fechar janela"
             onClick={onClose}
+            disabled={busy}
           >
             <Icon name="close" />
           </button>
@@ -292,41 +348,59 @@ export function FormShell({
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
+  const formRef = useRef(null);
   async function submit(event) {
     event.preventDefault();
+    if (busy) return;
     setError(null);
     setBusy(true);
     try {
       await onSubmit();
     } catch (err) {
       setError(err);
+      requestAnimationFrame(() => {
+        formRef.current
+          ?.querySelector('[aria-invalid="true"], .error-box')
+          ?.focus();
+      });
     } finally {
       setBusy(false);
     }
   }
   return (
-    <form onSubmit={submit}>
-      <div className="form-content">
-        {children}
-        <ErrorMessage error={error} />
-      </div>
-      <div className="form-footer">
-        <button
-          type="button"
-          className="button button-secondary"
-          onClick={onClose}
-          disabled={busy}
-        >
-          Voltar
-        </button>
-        <SubmitButton
-          busy={busy}
-          className={`button ${danger ? "button-danger" : "button-primary"}`}
-        >
-          {submitLabel}
-        </SubmitButton>
-      </div>
-    </form>
+    <FormFeedbackContext.Provider value={{ fieldErrors: error?.fieldErrors }}>
+      <form
+        ref={formRef}
+        onSubmit={submit}
+        aria-busy={busy}
+        onChange={() => {
+          if (error) setError(null);
+        }}
+      >
+        <fieldset className="form-fields" disabled={busy}>
+          <div className="form-content">
+            {children}
+            <ErrorMessage error={error} />
+          </div>
+        </fieldset>
+        <div className="form-footer">
+          <button
+            type="button"
+            className="button button-secondary"
+            onClick={onClose}
+            disabled={busy}
+          >
+            Voltar
+          </button>
+          <SubmitButton
+            busy={busy}
+            className={`button ${danger ? "button-danger" : "button-primary"}`}
+          >
+            {submitLabel}
+          </SubmitButton>
+        </div>
+      </form>
+    </FormFeedbackContext.Provider>
   );
 }
 export function CarArt({ tone = "#b4c5ba", large = false }) {

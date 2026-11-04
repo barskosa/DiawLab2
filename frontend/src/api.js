@@ -1,4 +1,4 @@
-const origin = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+const origin = (import.meta.env?.VITE_API_BASE_URL || "").replace(/\/$/, "");
 
 export class ApiError extends Error {
   constructor(message, status, fieldErrors) {
@@ -14,6 +14,12 @@ async function readResponse(response) {
   try {
     data = raw ? JSON.parse(raw) : null;
   } catch {
+    if (response.ok) {
+      throw new ApiError(
+        "O servidor retornou uma resposta inesperada. Tente novamente.",
+        502,
+      );
+    }
     data = null;
   }
   if (!response.ok) {
@@ -38,7 +44,10 @@ export async function api(path, options = {}) {
   try {
     if (method !== "GET") {
       const csrf = await readResponse(
-        await fetch(`${origin}/api/auth/csrf`, { credentials: "include" }),
+        await fetch(`${origin}/api/auth/csrf`, {
+          credentials: "include",
+          signal: options.signal,
+        }),
       );
       headers[csrf.headerName] = csrf.token;
     }
@@ -49,12 +58,22 @@ export async function api(path, options = {}) {
         method,
         headers,
         credentials: "include",
+        signal: options.signal,
         ...(options.body !== undefined
           ? { body: JSON.stringify(options.body) }
           : {}),
       }),
     );
   } catch (error) {
+    if (error.name === "AbortError") throw error;
+    if (
+      error.status === 401 &&
+      !options.signal?.aborted &&
+      !["/auth/login", "/auth/register", "/auth/me"].includes(path) &&
+      typeof window !== "undefined"
+    ) {
+      window.dispatchEvent(new CustomEvent("rota:session-expired"));
+    }
     if (error instanceof ApiError) throw error;
     throw new ApiError(
       "Não foi possível conectar à API. Verifique se o servidor está em execução.",

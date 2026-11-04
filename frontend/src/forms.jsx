@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import ClientFinancialSummary from "./ClientFinancialSummary.jsx";
 import {
   CarArt,
   Field,
@@ -51,6 +52,7 @@ export function ClientFields({ value, onChange }) {
       <div className="form-grid">
         <TextField
           label="Nome completo"
+          name="name"
           autoComplete="name"
           required
           maxLength={120}
@@ -60,6 +62,7 @@ export function ClientFields({ value, onChange }) {
         />
         <TextField
           label="CPF"
+          name="cpf"
           required
           inputMode="numeric"
           autoComplete="off"
@@ -70,6 +73,7 @@ export function ClientFields({ value, onChange }) {
         />
         <TextField
           label="RG"
+          name="rg"
           required
           maxLength={30}
           value={value.rg}
@@ -77,6 +81,7 @@ export function ClientFields({ value, onChange }) {
         />
         <TextField
           label="Endereço completo"
+          name="address"
           required
           autoComplete="street-address"
           maxLength={250}
@@ -86,6 +91,7 @@ export function ClientFields({ value, onChange }) {
         />
         <TextField
           label="Profissão"
+          name="profession"
           required
           maxLength={120}
           className="span-2"
@@ -121,6 +127,7 @@ export function ClientFields({ value, onChange }) {
         <div className="employment-row" key={index}>
           <TextField
             label={`Empregador ${index + 1}`}
+            name={`employments[${index}].employer`}
             required
             maxLength={120}
             value={item.employer}
@@ -130,6 +137,7 @@ export function ClientFields({ value, onChange }) {
           />
           <TextField
             label="Renda mensal (R$)"
+            name={`employments[${index}].income`}
             required
             type="number"
             min="0.01"
@@ -205,6 +213,7 @@ export function VehicleForm({ vehicle, onSubmit, onClose }) {
       <div className="form-grid">
         <TextField
           label="Marca"
+          name="brand"
           placeholder="Ex.: Volkswagen"
           maxLength={80}
           required
@@ -213,6 +222,7 @@ export function VehicleForm({ vehicle, onSubmit, onClose }) {
         />
         <TextField
           label="Modelo"
+          name="model"
           placeholder="Ex.: Polo"
           maxLength={80}
           required
@@ -221,6 +231,7 @@ export function VehicleForm({ vehicle, onSubmit, onClose }) {
         />
         <TextField
           label="Matrícula / registro"
+          name="registration"
           placeholder="Identificação do veículo"
           maxLength={40}
           required
@@ -229,6 +240,9 @@ export function VehicleForm({ vehicle, onSubmit, onClose }) {
         />
         <TextField
           label="Placa"
+          name="plate"
+          pattern="[A-Za-z]{3}-?[0-9][A-Za-z0-9][0-9]{2}"
+          title="Informe uma placa como ABC1234 ou ABC1D23."
           placeholder="ABC1D23"
           maxLength={8}
           required
@@ -237,6 +251,7 @@ export function VehicleForm({ vehicle, onSubmit, onClose }) {
         />
         <TextField
           label="Ano"
+          name="year"
           required
           type="number"
           min="1900"
@@ -246,6 +261,7 @@ export function VehicleForm({ vehicle, onSubmit, onClose }) {
         />
         <SelectField
           label="Categoria"
+          name="category"
           value={value.category}
           onChange={change(setValue, value, "category")}
         >
@@ -259,6 +275,7 @@ export function VehicleForm({ vehicle, onSubmit, onClose }) {
         </SelectField>
         <TextField
           label="Valor da diária (R$)"
+          name="dailyRate"
           required
           type="number"
           min="0.01"
@@ -307,6 +324,7 @@ export function OrderForm({ order, vehicleId, vehicles, onSubmit, onClose }) {
     >
       <SelectField
         label="Automóvel"
+        name="vehicleId"
         required
         value={value.vehicleId}
         onChange={change(setValue, value, "vehicleId")}
@@ -341,6 +359,7 @@ export function OrderForm({ order, vehicleId, vehicles, onSubmit, onClose }) {
       <div className="form-grid">
         <TextField
           label="Retirada"
+          name="startDate"
           required
           type="date"
           min={today()}
@@ -356,6 +375,7 @@ export function OrderForm({ order, vehicleId, vehicles, onSubmit, onClose }) {
         />
         <TextField
           label="Devolução"
+          name="endDate"
           required
           type="date"
           min={value.startDate || today()}
@@ -365,11 +385,14 @@ export function OrderForm({ order, vehicleId, vehicles, onSubmit, onClose }) {
       </div>
       <Field
         label="Observações"
+        name="notes"
         hint="Opcional. Conte ao agente o que ele precisa saber."
       >
-        {(id) => (
+        {(id, accessibility) => (
           <textarea
             id={id}
+            name="notes"
+            {...accessibility}
             rows={3}
             maxLength={2000}
             value={value.notes}
@@ -392,7 +415,7 @@ export function OrderForm({ order, vehicleId, vehicles, onSubmit, onClose }) {
     </FormShell>
   );
 }
-export function ReviewForm({ order, onSubmit, onClose }) {
+export function ReviewForm({ order, clientId, onSubmit, onClose }) {
   const [approved, setApproved] = useState("true");
   const [reviewNotes, setNotes] = useState("");
   return (
@@ -405,8 +428,10 @@ export function ReviewForm({ order, onSubmit, onClose }) {
         <span>{order.clientName}</span>
         <strong>{money(order.totalAmount)}</strong>
       </div>
+      <ClientFinancialSummary clientId={clientId} amount={order.totalAmount} />
       <SelectField
         label="Parecer financeiro"
+        name="approved"
         value={approved}
         onChange={(event) => setApproved(event.target.value)}
       >
@@ -415,11 +440,14 @@ export function ReviewForm({ order, onSubmit, onClose }) {
       </SelectField>
       <Field
         label="Justificativa"
+        name="reviewNotes"
         hint="O cliente poderá consultar este parecer."
       >
-        {(id) => (
+        {(id, accessibility) => (
           <textarea
             id={id}
+            name="reviewNotes"
+            {...accessibility}
             required
             rows={4}
             minLength={3}
@@ -471,6 +499,7 @@ export function ContractForm({ order, user, onSubmit, onClose }) {
       </div>
       <SelectField
         label="Registrar automóvel em nome de"
+        name="ownerType"
         value={ownerType}
         onChange={(event) => setOwnerType(event.target.value)}
       >
@@ -499,6 +528,7 @@ export function ContractForm({ order, user, onSubmit, onClose }) {
             <div className="credit-fields">
               <TextField
                 label="Valor financiado (R$)"
+                name="credit.amount"
                 type="number"
                 required
                 min="0.01"
@@ -510,6 +540,7 @@ export function ContractForm({ order, user, onSubmit, onClose }) {
               <div className="form-grid">
                 <TextField
                   label="Taxa de juros (%)"
+                  name="credit.interestRate"
                   type="number"
                   required
                   min="0"
@@ -520,6 +551,7 @@ export function ContractForm({ order, user, onSubmit, onClose }) {
                 />
                 <TextField
                   label="Quantidade de parcelas"
+                  name="credit.installments"
                   type="number"
                   required
                   min="1"

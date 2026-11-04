@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { api } from "./api.js";
 import {
   CarArt,
   ErrorMessage,
+  FormFeedbackContext,
   Icon,
   Logo,
   SelectField,
@@ -22,15 +23,18 @@ export default function Auth({ onAuthenticated, connectionError }) {
   });
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState("");
+  const formRef = useRef(null);
   function field(key) {
     return (event) => setValue({ ...value, [key]: event.target.value });
   }
   async function submit(event) {
     event.preventDefault();
+    if (busy) return;
     setBusy(true);
     setError(null);
     try {
-      if (register)
+      if (register) {
         await api("/auth/register", {
           method: "POST",
           body: {
@@ -42,6 +46,11 @@ export default function Auth({ onAuthenticated, connectionError }) {
             })),
           },
         });
+        setRegister(false);
+        setNotice(
+          "Cadastro criado. Você já pode entrar com seu usuário e senha.",
+        );
+      }
       const user = await api("/auth/login", {
         method: "POST",
         body: { username: value.username, password: value.password },
@@ -49,6 +58,11 @@ export default function Auth({ onAuthenticated, connectionError }) {
       onAuthenticated(user);
     } catch (err) {
       setError(err);
+      requestAnimationFrame(() =>
+        formRef.current
+          ?.querySelector('[aria-invalid="true"], .error-box')
+          ?.focus(),
+      );
     } finally {
       setBusy(false);
     }
@@ -98,75 +112,114 @@ export default function Auth({ onAuthenticated, connectionError }) {
                 : "Entre na sua conta para continuar."}
             </p>
           </div>
-          <form onSubmit={submit}>
-            <div className="form-content">
-              <TextField
-                label="Usuário"
-                placeholder="Seu nome de usuário"
-                autoComplete="username"
-                minLength={3}
-                maxLength={60}
-                required
-                value={value.username}
-                onChange={field("username")}
-              />
-              <TextField
-                label="Senha"
-                placeholder={register ? "Pelo menos 8 caracteres" : "Sua senha"}
-                type="password"
-                autoComplete={register ? "new-password" : "current-password"}
-                minLength={register ? 8 : undefined}
-                maxLength={72}
-                required
-                value={value.password}
-                onChange={field("password")}
-              />
-              {register && (
-                <>
-                  <SelectField
-                    label="Tipo de cadastro"
-                    value={value.role}
-                    onChange={field("role")}
-                  >
-                    <option value="CLIENT">Cliente — quero alugar</option>
-                    <option value="COMPANY">Empresa — agente de locação</option>
-                    <option value="BANK">Banco — agente financeiro</option>
-                  </SelectField>
-                  {value.role === "CLIENT" ? (
-                    <ClientFields value={value} onChange={setValue} />
-                  ) : (
+          <FormFeedbackContext.Provider
+            value={{ fieldErrors: error?.fieldErrors }}
+          >
+            <form
+              ref={formRef}
+              onSubmit={submit}
+              aria-busy={busy}
+              onChange={() => {
+                if (error) setError(null);
+              }}
+            >
+              <fieldset className="form-fields" disabled={busy}>
+                <div className="form-content">
+                  <TextField
+                    label="Usuário"
+                    name="username"
+                    placeholder="Seu nome de usuário"
+                    autoComplete="username"
+                    minLength={3}
+                    maxLength={80}
+                    pattern={register ? "[a-zA-Z0-9._@-]{3,80}" : undefined}
+                    hint={
+                      register
+                        ? "Use letras, números, ponto, @, _ ou hífen."
+                        : undefined
+                    }
+                    required
+                    value={value.username}
+                    onChange={field("username")}
+                  />
+                  <TextField
+                    label="Senha"
+                    name="password"
+                    placeholder={
+                      register ? "Pelo menos 8 caracteres" : "Sua senha"
+                    }
+                    type="password"
+                    autoComplete={
+                      register ? "new-password" : "current-password"
+                    }
+                    minLength={register ? 8 : undefined}
+                    maxLength={72}
+                    required
+                    value={value.password}
+                    onChange={field("password")}
+                  />
+                  {register && (
                     <>
-                      <TextField
-                        label="Nome da instituição"
-                        required
-                        maxLength={120}
-                        autoComplete="organization"
-                        value={value.name}
-                        onChange={field("name")}
-                      />
-                      <TextField
-                        label="Código de cadastro de agente"
-                        hint="Solicite o código ao responsável pelo sistema."
-                        type="password"
-                        required
-                        autoComplete="off"
-                        value={value.agentCode}
-                        onChange={field("agentCode")}
-                      />
+                      <SelectField
+                        label="Tipo de cadastro"
+                        name="role"
+                        value={value.role}
+                        onChange={field("role")}
+                      >
+                        <option value="CLIENT">Cliente — quero alugar</option>
+                        <option value="COMPANY">
+                          Empresa — agente de locação
+                        </option>
+                        <option value="BANK">Banco — agente financeiro</option>
+                      </SelectField>
+                      {value.role === "CLIENT" ? (
+                        <ClientFields value={value} onChange={setValue} />
+                      ) : (
+                        <>
+                          <TextField
+                            label="Nome da instituição"
+                            name="name"
+                            required
+                            maxLength={120}
+                            autoComplete="organization"
+                            value={value.name}
+                            onChange={field("name")}
+                          />
+                          <TextField
+                            label="Código de cadastro de agente"
+                            name="agentCode"
+                            hint="Solicite o código ao responsável pelo sistema."
+                            type="password"
+                            required
+                            autoComplete="off"
+                            value={value.agentCode}
+                            onChange={field("agentCode")}
+                          />
+                        </>
+                      )}
                     </>
                   )}
-                </>
-              )}
-              <ErrorMessage error={error || connectionError} />
-              <SubmitButton busy={busy}>
-                {register ? "Criar conta e entrar" : "Entrar na minha conta"}
-              </SubmitButton>
-            </div>
-          </form>
+                  {notice && (
+                    <p className="auth-notice" role="status">
+                      <Icon name="check" size={17} />
+                      {notice}
+                    </p>
+                  )}
+                  <ErrorMessage error={error || connectionError} />
+                  <SubmitButton busy={busy}>
+                    {register
+                      ? "Criar conta e entrar"
+                      : "Entrar na minha conta"}
+                  </SubmitButton>
+                </div>
+              </fieldset>
+            </form>
+          </FormFeedbackContext.Provider>
           <p className="auth-switch">
             {register ? "Já tem uma conta?" : "Ainda não tem uma conta?"}{" "}
             <button
               type="button"
+              disabled={busy}
               onClick={() => {
                 setRegister(!register);
                 setError(null);

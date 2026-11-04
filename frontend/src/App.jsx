@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Auth from "./Auth.jsx";
 import { api } from "./api.js";
 import {
@@ -14,7 +14,9 @@ import {
   money,
   roleLabel,
   statuses,
+  useMediaQuery,
 } from "./components.jsx";
+import ClientFinancialSummary from "./ClientFinancialSummary.jsx";
 import {
   ContractForm,
   OrderForm,
@@ -56,6 +58,11 @@ export default function App() {
   const [dialog, setDialog] = useState(null);
   const [toast, setToast] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const requestRef = useRef(null);
+  const sidebarRef = useRef(null);
+  const menuButtonRef = useRef(null);
+  const isMobile = useMediaQuery("(max-width: 850px)");
   const isAgent = user?.role === "BANK" || user?.role === "COMPANY";
   useEffect(() => {
     let active = true;
@@ -86,17 +93,39 @@ export default function App() {
     const timeout = setTimeout(() => setToast(""), 5000);
     return () => clearTimeout(timeout);
   }, [toast]);
+  useEffect(() => {
+    function expired() {
+      requestRef.current?.abort();
+      setUser(null);
+      setData(initialData);
+      setDialog(null);
+      setToast("");
+      setConnectionError("Sua sessão expirou. Entre novamente para continuar.");
+    }
+    window.addEventListener("rota:session-expired", expired);
+    return () => window.removeEventListener("rota:session-expired", expired);
+  }, []);
+  useEffect(() => {
+    if (isMobile && mobileMenu) sidebarRef.current?.querySelector("a")?.focus();
+    if (!isMobile) setMobileMenu(false);
+  }, [isMobile, mobileMenu]);
   const refresh = useCallback(async () => {
     if (!user) return;
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
     setLoading(true);
     setError(null);
     try {
       const [vehicles, orders, contracts, extra] = await Promise.all([
-        api("/vehicles"),
-        api("/orders"),
-        api("/contracts"),
-        api(isAgent ? "/clients" : "/clients/me"),
+        api("/vehicles", { signal: controller.signal }),
+        api("/orders", { signal: controller.signal }),
+        api("/contracts", { signal: controller.signal }),
+        api(isAgent ? "/clients" : "/clients/me", {
+          signal: controller.signal,
+        }),
       ]);
+      if (controller.signal.aborted) return;
       setData({
         vehicles,
         orders,
@@ -105,17 +134,19 @@ export default function App() {
         profile: isAgent ? null : extra,
       });
     } catch (err) {
+      if (controller.signal.aborted || err.name === "AbortError") return;
       if (err.status === 401) {
         setUser(null);
         setData(initialData);
         setConnectionError(null);
       } else setError(err);
     } finally {
-      setLoading(false);
+      if (requestRef.current === controller) setLoading(false);
     }
   }, [user, isAgent]);
   useEffect(() => {
     refresh();
+    return () => requestRef.current?.abort();
   }, [refresh]);
   const activePage =
     titles[page] &&
@@ -123,33 +154,51 @@ export default function App() {
     !(page === "profile" && isAgent)
       ? page
       : "dashboard";
+  useEffect(() => {
+    document.title = `${titles[activePage][0]} | Rota`;
+    document.getElementById("main-content")?.focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+  }, [activePage, user?.id]);
+  function closeMobileMenu() {
+    setMobileMenu(false);
+    requestAnimationFrame(() => menuButtonRef.current?.focus());
+  }
   function navigate(next) {
     window.location.hash = next;
     setMobileMenu(false);
   }
   async function mutate(path, method, body, message) {
-    const result = await api(path, {
-      method,
-      ...(body !== undefined ? { body } : {}),
-    });
-    setDialog(null);
-    setToast(message);
-    await refresh();
-    return result;
+    setSubmitting(true);
+    try {
+      const result = await api(path, {
+        method,
+        ...(body !== undefined ? { body } : {}),
+      });
+      setDialog(null);
+      setToast(message);
+      await refresh();
+      return result;
+    } finally {
+      setSubmitting(false);
+    }
   }
   async function logout() {
+    requestRef.current?.abort();
     try {
       await api("/auth/logout", { method: "POST" });
       setUser(null);
       setData(initialData);
       setConnectionError(null);
       setDialog(null);
+      setToast("");
+      setMobileMenu(false);
       window.location.hash = "";
     } catch (err) {
       setError(err);
     }
   }
   function login(result) {
+    requestRef.current?.abort();
     setConnectionError(null);
     setUser(result);
     setData(initialData);
@@ -194,11 +243,51 @@ export default function App() {
         <button
           className="sidebar-backdrop"
           aria-label="Fechar menu"
-          onClick={() => setMobileMenu(false)}
+          onClick={closeMobileMenu}
+          tabIndex={-1}
         />
       )}
-      <aside className={`sidebar ${mobileMenu ? "sidebar-open" : ""}`}>
+      <aside
+        id="app-sidebar"
+        ref={sidebarRef}
+        className={`sidebar ${mobileMenu ? "sidebar-open" : ""}`}
+        inert={isMobile && !mobileMenu}
+        role={isMobile && mobileMenu ? "dialog" : undefined}
+        aria-modal={isMobile && mobileMenu ? true : undefined}
+        aria-label="Navegação do sistema"
+        onKeyDown={(event) => {
+          if (!isMobile || !mobileMenu) return;
+          if (event.key === "Escape") {
+            event.preventDefault();
+            closeMobileMenu();
+          }
+          if (event.key === "Tab") {
+            const controls = [
+              ...sidebarRef.current.querySelectorAll(
+                "a[href], button:not(:disabled)",
+              ),
+            ];
+            const first = controls[0],
+              last = controls.at(-1);
+            if (event.shiftKey && document.activeElement === first) {
+              event.preventDefault();
+              last?.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+              event.preventDefault();
+              first?.focus();
+            }
+          }
+        }}
+      >
         <div className="sidebar-brand">
+          <button
+            type="button"
+            className="icon-button sidebar-close"
+            aria-label="Fechar navegação"
+            onClick={closeMobileMenu}
+          >
+            <Icon name="close" size={19} />
+          </button>
           <Logo light />
           <span>GESTÃO DE ALUGUÉIS</span>
         </div>
@@ -257,13 +346,15 @@ export default function App() {
           </div>
         </div>
       </aside>
-      <div className="main-shell">
+      <div className="main-shell" inert={isMobile && mobileMenu}>
         <header className="topbar">
           <div className="topbar-left">
             <button
               className="icon-button mobile-menu"
+              ref={menuButtonRef}
               aria-label="Abrir menu"
               aria-expanded={mobileMenu}
+              aria-controls="app-sidebar"
               onClick={() => setMobileMenu(!mobileMenu)}
             >
               <Icon name="menu" />
@@ -336,7 +427,11 @@ export default function App() {
               Atualizando informações…
             </div>
           )}
-          <div className={loading ? "page-body is-loading" : "page-body"}>
+          <div
+            className={loading ? "page-body is-loading" : "page-body"}
+            inert={loading}
+            aria-busy={loading}
+          >
             {activePage === "dashboard" && (
               <Dashboard
                 user={user}
@@ -394,6 +489,7 @@ export default function App() {
           title={dialogTitle(dialog)}
           description={dialogDescription(dialog)}
           onClose={close}
+          busy={submitting}
           wide={dialog.kind === "profile"}
         >
           {dialog.kind === "vehicle" && (
@@ -430,6 +526,9 @@ export default function App() {
             <OrderDetails
               order={dialog.item}
               isAgent={isAgent}
+              contract={data.contracts.find(
+                (item) => item.orderId === dialog.item.id,
+              )}
               onOpen={open}
               onClose={close}
             />
@@ -437,6 +536,7 @@ export default function App() {
           {dialog.kind === "review" && (
             <ReviewForm
               order={dialog.item}
+              clientId={dialog.item.clientId}
               onClose={close}
               onSubmit={(body) =>
                 mutate(
@@ -510,11 +610,17 @@ export default function App() {
                     "Automóvel excluído.",
                   );
                 else {
-                  await api("/clients/me", { method: "DELETE" });
-                  setDialog(null);
-                  setUser(null);
-                  setData(initialData);
-                  setConnectionError(null);
+                  setSubmitting(true);
+                  try {
+                    await api("/clients/me", { method: "DELETE" });
+                    setDialog(null);
+                    setUser(null);
+                    setData(initialData);
+                    setConnectionError(null);
+                    setToast("");
+                  } finally {
+                    setSubmitting(false);
+                  }
                 }
               }}
             >
@@ -1319,7 +1425,7 @@ function Detail({ label, value }) {
     </div>
   );
 }
-function OrderDetails({ order, isAgent, onOpen, onClose }) {
+function OrderDetails({ order, isAgent, contract, onOpen, onClose }) {
   const editable = ["PENDING", "APPROVED"].includes(order.status);
   return (
     <div>
@@ -1330,6 +1436,7 @@ function OrderDetails({ order, isAgent, onOpen, onClose }) {
           </span>
           <Status value={order.status} />
         </div>
+        <OrderProgress status={order.status} />
         <div className="detail-vehicle">
           <CarArt />
           <h3>
@@ -1345,6 +1452,12 @@ function OrderDetails({ order, isAgent, onOpen, onClose }) {
           <Detail label="Retirada" value={date(order.startDate)} />
           <Detail label="Devolução" value={date(order.endDate)} />
         </dl>
+        {isAgent && (
+          <ClientFinancialSummary
+            clientId={order.clientId}
+            amount={order.totalAmount}
+          />
+        )}
         {order.notes && (
           <div className="notes-block">
             <h4>Observações do pedido</h4>
@@ -1374,6 +1487,25 @@ function OrderDetails({ order, isAgent, onOpen, onClose }) {
             {isAgent
               ? "Parecer positivo. O pedido está disponível para execução do contrato."
               : "Pedido aprovado. Aguarde a execução do contrato por um agente."}
+          </p>
+        )}
+        {order.status === "REJECTED" && (
+          <p className="info-note">
+            <Icon name="info" size={18} />O pedido recebeu parecer desfavorável.
+            Consulte a justificativa acima. O cliente pode criar uma nova
+            solicitação.
+          </p>
+        )}
+        {order.status === "CANCELLED" && (
+          <p className="info-note">
+            <Icon name="info" size={18} />O pedido foi cancelado pelo cliente e
+            não seguirá para contratação.
+          </p>
+        )}
+        {order.status === "CONTRACTED" && (
+          <p className="info-note">
+            <Icon name="shield" size={18} />O aluguel foi formalizado. A
+            propriedade e as condições de crédito estão disponíveis no contrato.
           </p>
         )}
       </div>
@@ -1413,13 +1545,68 @@ function OrderDetails({ order, isAgent, onOpen, onClose }) {
             Executar contrato
           </button>
         )}
-        {!editable && (
+        {contract && (
+          <button
+            className="button button-primary"
+            onClick={() => onOpen("contract-details", contract)}
+          >
+            <Icon name="shield" size={17} />
+            Ver contrato
+          </button>
+        )}
+        {!editable && !contract && (
           <button className="button button-secondary" onClick={onClose}>
             Fechar detalhes
           </button>
         )}
       </div>
     </div>
+  );
+}
+function OrderProgress({ status }) {
+  const terminal = status === "CANCELLED" || status === "REJECTED";
+  const current =
+    status === "CONTRACTED"
+      ? 3
+      : status === "APPROVED"
+        ? 2
+        : status === "CANCELLED"
+          ? 0
+          : 1;
+  const labels =
+    status === "CANCELLED"
+      ? ["Pedido cancelado", "Análise financeira", "Contrato"]
+      : status === "REJECTED"
+        ? ["Pedido enviado", "Parecer reprovado", "Contrato"]
+        : ["Pedido enviado", "Análise financeira", "Contrato"];
+  return (
+    <ol
+      className={`order-progress ${terminal ? "progress-terminal" : ""}`}
+      aria-label="Andamento do pedido"
+    >
+      {labels.map((label, index) => (
+        <li
+          key={index}
+          className={
+            index < current
+              ? "step-complete"
+              : index === current
+                ? "step-current"
+                : ""
+          }
+          aria-current={index === current ? "step" : undefined}
+        >
+          <span>
+            {index < current ? (
+              <Icon name="check" size={12} />
+            ) : (
+              String(index + 1).padStart(2, "0")
+            )}
+          </span>
+          <strong>{label}</strong>
+        </li>
+      ))}
+    </ol>
   );
 }
 function ContractDetails({ contract, onClose }) {
