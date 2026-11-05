@@ -2,26 +2,24 @@
 
 # Rota — Sistema de Aluguel de Carros
 
-Aplicação web para clientes solicitarem aluguéis e acompanharem sua análise, enquanto empresas e bancos gerenciam a frota, avaliam pedidos e executam contratos.
-
-Projeto acadêmico do **Laboratório 02 de Desenvolvimento e Integração de Aplicações Web (DIAW)**, do curso de Engenharia de Software. Documentação organizada a partir do template fornecido pelo professor João Paulo Carneiro Aramuni.
+Aplicação web para solicitar aluguéis, acompanhar a análise financeira e formalizar contratos com empresas e bancos. Projeto do **Laboratório 02 de Desenvolvimento e Integração de Aplicações Web**, organizado a partir do template de README da disciplina.
 
 ## Status do projeto
 
-Código da aplicação e documentação disponíveis neste repositório. Back-end compilado com JDK 25, **30 testes Java e 10 testes do cliente HTTP aprovados**, além de verificação da API no PostgreSQL real do Supabase. Cada instalação precisa de suas próprias credenciais em `backend/.env`. O Flyway cria as tabelas; as contas e os automóveis são cadastrados pela interface.
+Aplicação com React, API Java e PostgreSQL no Supabase. A versão inclui **43 testes automatizados aprovados: 30 Java e 13 do front-end**, além de verificações de integração e navegação. A execução local depende das credenciais do banco em `backend/.env`.
 
 ## Índice
 
 - [Links úteis](#links-úteis)
 - [Sobre o projeto](#sobre-o-projeto)
-- [Atendimento ao enunciado](#atendimento-ao-enunciado)
 - [Funcionalidades principais](#funcionalidades-principais)
 - [Tecnologias utilizadas](#tecnologias-utilizadas)
-- [Arquitetura](#arquitetura)
+- [Arquitetura e modelagem](#arquitetura-e-modelagem)
+- [Design System](#design-system)
 - [Instalação e execução](#instalação-e-execução)
+- [Contas de demonstração](#contas-de-demonstração)
 - [Deploy](#deploy)
 - [Estrutura de pastas](#estrutura-de-pastas)
-- [Contas de demonstração](#contas-de-demonstração)
 - [Demonstração](#demonstração)
 - [Testes](#testes)
 - [Documentações utilizadas](#documentações-utilizadas)
@@ -33,117 +31,88 @@ Código da aplicação e documentação disponíveis neste repositório. Back-en
 ## Links úteis
 
 - [Repositório GitHub](https://github.com/barskosa/DiawLab2)
-- [Logins de teste para avaliação](#contas-de-demonstração)
 - [Requisitos e rastreabilidade](docs/REQUISITOS.md)
-- [Histórias de usuário e critérios de aceite](docs/HISTORIAS-USUARIO.md)
-- [Modelagem UML e comparação das versões](docs/MODELAGEM.md)
+- [Histórias de usuário](docs/HISTORIAS-USUARIO.md)
+- [Modelagem UML](docs/MODELAGEM.md)
 - [Contrato da API](docs/API-CONTRACT.md)
-- [Roteiro da apresentação](docs/ROTEIRO-APRESENTACAO.md)
+- [Design System e tokens](docs/design-system.md)
+- [Design System em PDF](frontend/public/design-system-rota.pdf)
+- [Logins de demonstração](#contas-de-demonstração)
 
 ## Sobre o projeto
 
-O Rota centraliza o processo de aluguel de automóveis: cadastro do contratante, solicitação de período e veículo, parecer financeiro de um agente e emissão de contrato quando aprovado. Clientes, empresas e bancos acessam o mesmo servidor pela aplicação React, com permissões verificadas pelo Spring Boot.
+O Rota centraliza cadastro de contratantes, frota, pedidos, pareceres e contratos. Clientes acompanham suas solicitações; empresas e bancos analisam condições financeiras e executam contratos aprovados. O banco mantém identificação, profissão e até três vínculos de empregador/rendimento de cada cliente.
 
-O escopo segue o enunciado do Laboratório 02. As decisões complementares necessárias à implementação, como regras de datas e de transição de status, estão identificadas em [Requisitos](docs/REQUISITOS.md). Os modelos estão preservados em três versões: conceito em `docs/uml/v1`, primeira implementação em `docs/uml/v2` e revisão do código atual em `docs/uml/v3`.
-
-## Atendimento ao enunciado
-
-O enunciado estabelece três critérios de avaliação: **adequação aos requisitos**, **alinhamento entre modelos e código** e **atualização dos modelos**. A tabela relaciona os entregáveis a evidências verificáveis no repositório.
-
-| Requisito ou entregável | Implementação e evidência |
-| --- | --- |
-| Java 25, Spring Boot 4.0.x e Maven | [pom.xml](backend/pom.xml), Maven Wrapper e API compilada com JDK 25 |
-| React + Vite, PostgreSQL/Supabase e MVC | [Front-end](frontend/package.json), [configuração JDBC e Flyway](backend/src/main/resources/application.properties) e [diagrama de pacotes MVC atual](docs/uml/v3/pacotes.svg); conexão real com Supabase validada |
-| Cadastro e login obrigatório para clientes e agentes | [AuthController](backend/src/main/java/br/com/rota/controller/AuthController.java), [SecurityConfig](backend/src/main/java/br/com/rota/config/SecurityConfig.java) e testes HTTP de sessão, credenciais e autorização |
-| CRUD de cliente e identificação completa | [ClientController](backend/src/main/java/br/com/rota/controller/ClientController.java) e [AuthService](backend/src/main/java/br/com/rota/service/AuthService.java); nome, CPF, RG, endereço, profissão e até três vínculos com empregador e rendimento |
-| Criar, consultar, modificar e cancelar pedidos; acompanhar status | [OrderController](backend/src/main/java/br/com/rota/controller/OrderController.java), páginas React e testes de criação, edição, cancelamento e isolamento entre clientes |
-| Agentes modificam e avaliam pedidos; parecer positivo antes do contrato | [RentalService](backend/src/main/java/br/com/rota/service/RentalService.java) e [resumo financeiro do cliente](frontend/src/ClientFinancialSummary.jsx); consulta de identificação/rendimentos, registro do parecer e bloqueio de contratação sem aprovação |
-| Automóveis e propriedade de cliente, empresa ou banco | [Vehicle](backend/src/main/java/br/com/rota/model/Vehicle.java) e [RentalContract](backend/src/main/java/br/com/rota/model/RentalContract.java); matrícula, ano, marca, modelo, placa e titularidade definida na contratação |
-| Contrato de crédito opcional concedido por banco agente | Associação ao banco, valor, juros e parcelas em `RentalContract`; teste que restringe a concessão ao próprio banco autenticado |
-| Casos de uso, histórias, classes e pacotes | [Modelos UML](docs/MODELAGEM.md) em fontes PlantUML e SVG, além das [histórias de usuário com critérios de aceite](docs/HISTORIAS-USUARIO.md) |
-| Comparação dos modelos iniciais com o código final | Versões `v1`, `v2` e `v3` preservadas; [comparação das versões](docs/MODELAGEM.md#comparação-das-versões-e-justificativas) e [revisão de 3–4 de novembro de 2026](docs/MODELAGEM.md#versão-3--revisão-do-código-e-dos-modelos) relacionam os ajustes ao código |
-| Qualidade e demonstração do protótipo | **30 testes Java e 10 do cliente HTTP aprovados**, verificação adicional em PostgreSQL/Supabase, build React, verificações no navegador, capturas de tela e [roteiro de apresentação](docs/ROTEIRO-APRESENTACAO.md) |
-
-A [matriz de rastreabilidade](docs/REQUISITOS.md) relaciona os requisitos a arquivos e métodos de teste. As suítes [RentalFlowTest](backend/src/test/java/br/com/rota/RentalFlowTest.java), [HttpSecurityTest](backend/src/test/java/br/com/rota/HttpSecurityTest.java), [ConcurrentRentalTest](backend/src/test/java/br/com/rota/ConcurrentRentalTest.java) e [ContractMigrationTest](backend/src/test/java/br/com/rota/ContractMigrationTest.java) verificam regras de negócio, API, concorrência e evolução do banco.
+A [matriz de requisitos](docs/REQUISITOS.md) relaciona o enunciado a arquivos e testes. Os modelos preservam a evolução do conceito e da implementação em `docs/uml/v1` a `v4`.
 
 ## Funcionalidades principais
 
-- Cadastro e login com usuário e senha; sessão protegida e saída da conta.
-- CRUD do próprio cadastro de cliente, incluindo RG, CPF, nome, endereço, profissão e até três vínculos de empregador/rendimento.
-- Consulta e edição dos dados de clientes pelos agentes.
-- Cadastro, consulta, alteração e exclusão de automóveis pelos agentes, com matrícula, ano, marca, modelo e placa.
-- Criação, consulta, alteração e cancelamento de pedidos pelos clientes.
-- Edição de pedidos e avaliação financeira com parecer por empresas e bancos.
-- Contratação somente após aprovação, com propriedade vinculada a cliente, empresa ou banco.
-- Crédito opcional concedido pelo banco autenticado, registrando valor, taxa e parcelas no contrato.
-- Preservação das condições do contrato e dos nomes das partes, mesmo após alterações no cadastro ou na frota.
-- Separação de acesso entre clientes e agentes, validação no servidor e prevenção de aluguéis contratados em períodos conflitantes.
+- Cadastro e login com usuário e senha, sessão e proteção CSRF.
+- CRUD do cadastro de cliente com nome, CPF, RG, endereço, profissão e até três vínculos de renda.
+- Cadastro, consulta, edição e exclusão de automóveis por agentes; consulta da frota pelos clientes.
+- Criação, consulta, alteração e cancelamento de pedidos pelo titular.
+- Edição e avaliação financeira por empresas e bancos, com identificação e rendimentos disponíveis durante o parecer.
+- Contratação após aprovação, propriedade de cliente/empresa/banco e crédito opcional concedido pelo próprio banco.
+- Preservação dos dados e valores contratuais após alterações no cadastro ou na frota.
+- Isolamento de acesso entre clientes e prevenção de contratações simultâneas em períodos conflitantes.
 
 ## Tecnologias utilizadas
 
-| Camada | Tecnologia | Uso |
-| --- | --- | --- |
-| Linguagem do servidor | Java, JDK 25 | Requisito do laboratório |
-| Back-end | Spring Boot 4.0.9 / Spring MVC | API e arquitetura MVC |
-| Segurança | Spring Security / BCrypt | Sessões, papéis, senha e CSRF |
-| Persistência | Spring Data JPA / Hibernate | Mapeamento de entidades e repositórios |
-| Banco | Supabase, PostgreSQL | Persistência da execução normal |
-| Migrações | Flyway | Criação versionada do esquema `rental` |
-| Build Java | Apache Maven / Maven Wrapper | Dependências, testes e empacotamento |
-| Front-end | React + Vite / JavaScript / CSS | Páginas dinâmicas e interface responsiva |
-| Testes Java | JUnit / Spring Boot Test / H2 | Testes isolados, sem credenciais do Supabase |
-| Modelagem | PlantUML | Casos de uso, classes e pacotes versionados |
+| Camada | Tecnologias |
+| --- | --- |
+| Front-end | React, Vite, JavaScript e CSS |
+| Back-end | Java **25**, Spring Boot **4.0.9**, Spring MVC e Apache Maven |
+| Segurança | Spring Security, sessão HTTP, BCrypt e CSRF |
+| Persistência | Spring Data JPA, Hibernate, PostgreSQL no Supabase e Flyway |
+| Testes | JUnit/Spring Boot Test, H2 restrito aos testes e executor nativo do Node.js |
+| Documentação | Markdown, Mermaid e PlantUML |
 
-H2 pertence exclusivamente ao ambiente de testes. A aplicação normal não substitui o Supabase por armazenamento no navegador ou banco simulado.
-
-## Arquitetura
+## Arquitetura e modelagem
 
 ```mermaid
 flowchart LR
-    U[Cliente / Empresa / Banco] --> V[View: React + Vite]
-    V -->|HTTP JSON / sessão / CSRF| C[Controller: Spring MVC]
-    C --> S[Services: regras e autorização]
-    S --> M[Model: entidades e repositórios JPA]
-    M -->|JDBC com SSL| D[(PostgreSQL no Supabase)]
-    F[Flyway: migrações] --> D
+    U[Cliente / Empresa / Banco] --> V[View: React]
+    V -->|JSON / sessão / CSRF| C[Controller: Spring MVC]
+    C --> S[Serviços e regras]
+    S --> M[Entidades e repositórios JPA]
+    M -->|JDBC com SSL| D[(PostgreSQL / Supabase)]
 ```
 
-O subsistema de páginas usa React como **View**. O subsistema de gestão concentra **Controllers** Spring MVC, serviços de domínio e o **Model** persistido. Controllers expõem DTOs, os serviços validam permissões e transições, e os repositórios acessam PostgreSQL. A interface nunca recebe a senha do banco.
+O front-end corresponde ao subsistema de páginas web. Controllers, serviços e entidades compõem a gestão de clientes, pedidos e contratos. DTOs delimitam os dados expostos; a sessão identifica o UUID do usuário. A exclusão anonimiza o cadastro e preserva os nomes já registrados em contratos.
 
-Clientes e agentes são representados por `AppUser` com papel `CLIENT`, `COMPANY` ou `BANK`. O crédito é opcional e seus dados ficam associados a `RentalContract`. As justificativas e as correspondências entre o modelo conceitual e o código estão em [Modelagem](docs/MODELAGEM.md).
+| Modelo | Versões anteriores | Referência atual |
+| --- | --- | --- |
+| Casos de uso de negócio | [v1](docs/uml/v1/casos-de-uso.svg) · [v2](docs/uml/v2/casos-de-uso.svg) | [v3](docs/uml/v3/casos-de-uso.svg) |
+| Classes de domínio | [v1](docs/uml/v1/classes.svg) · [v2](docs/uml/v2/classes.svg) | [v3](docs/uml/v3/classes.svg) |
+| Pacotes / MVC | [v1](docs/uml/v1/pacotes.svg) · [v2](docs/uml/v2/pacotes.svg) · [v3](docs/uml/v3/pacotes.svg) | [v4](docs/uml/v4/pacotes.svg) |
 
-### Modelos UML
+As fontes `.puml`, as decisões e a comparação entre versões estão em [Modelagem](docs/MODELAGEM.md).
 
-| Modelo | Conceito — v1 | Primeira implementação — v2 | Código atual — v3 |
-| --- | --- | --- | --- |
-| Casos de uso | [Diagrama v1](docs/uml/v1/casos-de-uso.svg) | [Diagrama v2](docs/uml/v2/casos-de-uso.svg) | [Diagrama v3](docs/uml/v3/casos-de-uso.svg) |
-| Classes | [Diagrama v1](docs/uml/v1/classes.svg) | [Diagrama v2](docs/uml/v2/classes.svg) | [Diagrama v3](docs/uml/v3/classes.svg) |
-| Pacotes / visão lógica | [Diagrama v1](docs/uml/v1/pacotes.svg) | [Diagrama v2](docs/uml/v2/pacotes.svg) | [Diagrama v3](docs/uml/v3/pacotes.svg) |
+## Design System
 
-As fontes editáveis estão nas mesmas pastas dos diagramas. A comparação documenta a centralização das credenciais em `AppUser`, os vínculos em `Employment`, a relação entre pedido e contrato e o crédito opcional. A revisão `v3` registra as condições preservadas no contrato, a identidade de sessão por UUID e as dependências reais da análise financeira na interface. O front-end corresponde ao subsistema de páginas web; o back-end concentra a gestão de pedidos e contratos. As revisões decorrem da implementação e da auditoria do código; nenhum feedback de aula foi atribuído ao professor sem ter sido fornecido.
+A referência visual reúne cores e escalas, tipografia, espaçamentos, bordas, marca nos temas claro/escuro, ícones e componentes. Rajdhani dá aos títulos uma linguagem automotiva; Inter mantém a leitura dos formulários e tabelas. As fontes são locais, com suas licenças em `frontend/public/fonts`.
+
+Com o front-end em execução, abra [Design System](http://localhost:5174/design). Se o Vite informar outra porta, acrescente `/design` ao endereço. A página é pública e apresenta apenas a identidade visual; os dados de negócio exigem login. Consulte os [tokens e princípios de uso](docs/design-system.md) e o [guia em PDF, com sete páginas](frontend/public/design-system-rota.pdf). **Exportar PDF** abre a impressão no tema atual; o PDF disponível para download apresenta o tema claro.
 
 ## Instalação e execução
 
 ### Pré-requisitos
 
-- Git.
-- **JDK 25** com `JAVA_HOME` e `PATH` configurados. Java 17 não atende à versão exigida pelo enunciado.
-- Node.js 22.12 ou superior compatível com o Vite usado no projeto; npm.
-- Projeto PostgreSQL ativo no Supabase e sua senha de banco.
-- Acesso à internet na primeira execução para baixar dependências Maven/npm.
-
-O Maven Wrapper está em `backend/`; não é necessário instalar Maven globalmente.
+- **JDK 25** com `JAVA_HOME` e `PATH` configurados.
+- Node.js 22.12 ou superior compatível com Vite e npm.
+- Projeto ativo no Supabase e senha do banco PostgreSQL.
+- Internet para baixar dependências na primeira execução. O Maven Wrapper está incluído.
 
 ### Variáveis de ambiente
 
-Copie os arquivos de exemplo a partir da raiz do repositório:
+Na raiz do repositório, copie os exemplos se os arquivos locais ainda não existirem:
 
 ```powershell
 if (!(Test-Path backend/.env)) { Copy-Item backend/.env.example backend/.env }
 if (!(Test-Path frontend/.env)) { Copy-Item frontend/.env.example frontend/.env }
 ```
 
-Edite `backend/.env` com os valores do painel **Connect → Session pooler** do Supabase:
+Em **Supabase → Connect → Session pooler**, copie host e usuário do seu projeto. Preencha `backend/.env`:
 
 ```dotenv
 DB_URL=jdbc:postgresql://SEU_HOST_DO_POOLER:5432/postgres?sslmode=require
@@ -153,273 +122,156 @@ APP_AGENT_REGISTRATION_CODE=ESCOLHA_UM_CODIGO_PRIVADO
 FRONTEND_ORIGIN=http://localhost:5173,http://localhost:5174,http://localhost:4173
 ```
 
-Copie host e usuário do seu próprio projeto; `DB_PASSWORD` recebe a senha do banco PostgreSQL. Use o Session pooler na porta `5432` com `sslmode=require`. O arquivo é carregado como Java Properties: use `CHAVE=valor`, sem aspas externas; uma barra invertida no valor deve ser escapada como `\\`. Inicie a API dentro de `backend`, onde está o `.env`.
+O arquivo usa Java Properties: `CHAVE=valor`, sem aspas externas; escape uma barra invertida como `\\`. Inicie a API dentro de `backend`, onde está o `.env`. Em `frontend/.env`, mantenha `VITE_API_BASE_URL=` vazio para usar o proxy local. Nenhuma chave `anon`/`service_role`, Supabase Auth ou API externa é necessária.
 
-O código de agentes é definido por você e informado apenas ao cadastrar uma empresa ou banco. Cliente não precisa desse código. No front-end, mantenha `VITE_API_BASE_URL=` vazio para usar o proxy local.
+### Iniciar a aplicação
 
-O React utiliza a API Spring em `/api`; em desenvolvimento, o Vite encaminha as requisições para `http://localhost:8080`. **Nenhuma chave `anon`, `service_role` ou API externa é necessária.** O login é implementado no Spring Security; não é preciso configurar Supabase Auth.
-
-### Instalação das dependências
-
-No diretório `frontend`:
-
-```powershell
-npm.cmd ci
-```
-
-As dependências Java são baixadas automaticamente pelo Wrapper ao testar ou iniciar o back-end.
-
-### Inicialização do banco de dados
-
-Após preencher `backend/.env`, o Flyway cria o esquema `rental` e aplica as migrações pendentes. A V1 cria a estrutura inicial; a V2 acrescenta as cópias das condições contratuais e preenche contratos anteriores com os dados conhecidos no momento da migração. O Hibernate valida as tabelas contra as entidades. Use um projeto Supabase destinado ao trabalho; as migrações não inserem contas ou veículos fictícios.
-
-### Como executar a aplicação
-
-Terminal 1, dentro de `backend`:
+No terminal 1, dentro de `backend`:
 
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
 
-Terminal 2, dentro de `frontend`:
+No terminal 2, dentro de `frontend`:
 
 ```powershell
+npm.cmd ci
 npm.cmd run dev
 ```
 
-Abra o endereço informado pelo Vite: **http://localhost:5173** por padrão, ou **http://localhost:5174** se a primeira porta estiver ocupada. Para outra porta, ajuste `FRONTEND_ORIGIN` no back-end e reinicie a API. A API atende em **http://localhost:8080/api**. Em Linux/macOS, use `./mvnw` e `npm` nos comandos equivalentes.
+Abra o endereço informado pelo Vite: `http://localhost:5173` por padrão ou `5174` se a primeira porta estiver ocupada. A API atende em `http://localhost:8080/api`. Para outra porta do front-end, ajuste `FRONTEND_ORIGIN` e reinicie a API. Em Linux/macOS, use `./mvnw` e `npm`.
+
+O Flyway cria o esquema `rental` e aplica as migrações: V1 estabelece a estrutura; V2 preserva condições contratuais. O Hibernate valida as entidades. Contratos anteriores à V2 são preenchidos com os dados disponíveis na migração. As migrações não criam contas nem automóveis de demonstração.
 
 ### Primeiro uso
 
-1. Defina `APP_AGENT_REGISTRATION_CODE` em `backend/.env` e inicie os dois servidores.
-2. Cadastre uma empresa, informe o código e entre nessa conta.
-3. Cadastre ao menos um automóvel na frota.
-4. Saia, cadastre um cliente com CPF válido e crie um pedido para o veículo.
-5. Entre novamente como agente para analisar e aprovar o pedido, depois executar seu contrato.
-6. Para demonstrar crédito, cadastre também um banco e faça a concessão autenticado nessa conta.
+1. Cadastre uma empresa usando o código definido no servidor e registre um automóvel.
+2. Cadastre um cliente com CPF válido, identificação, profissão e rendimentos; crie um pedido.
+3. Entre como agente para consultar os dados financeiros, avaliar e contratar o pedido aprovado.
+4. Para crédito, entre como banco e execute um contrato com as condições de financiamento.
+5. Use um cliente adicional sem compromissos ativos para demonstrar a exclusão do cadastro.
+
+## Contas de demonstração
+
+As contas foram cadastradas na base Supabase de apresentação e verificadas em **4 de novembro de 2026**, após a migração V2. Inicie a aplicação conectada ao **mesmo projeto**, usando a configuração privada de `backend/.env`.
+
+| Papel | Usuário | Senha | Acesso |
+| --- | --- | --- | --- |
+| Cliente | `cliente.teste` | `Teste123!` | Cadastro, pedidos próprios e contratos |
+| Empresa | `empresa.teste` | `Teste123!` | Frota, clientes, pareceres e contratos |
+| Banco | `banco.teste` | `Teste123!` | Pareceres, contratos e crédito próprio |
+
+Use **Sair da conta** para alternar os papéis. Essas senhas de aplicação são destinadas à demonstração. Senha do banco, chaves e código de agentes permanecem privados. Em um projeto Supabase novo, prepare as contas pelos fluxos de cadastro; o código de agente é solicitado somente no cadastro de empresa/banco.
 
 ## Deploy
 
-A entrega contém o código local; não há uma URL pública provisionada. Para uma publicação completa, hospede o processo Java e sirva o build React, preferencialmente no mesmo domínio com `/api` encaminhado ao Spring.
+Gere o front-end com `npm.cmd run build` em `frontend`. Para verificá-lo localmente com a API ativa, execute `npm.cmd run preview` e abra `http://localhost:4173`; o proxy encaminha `/api` ao Spring.
 
-Dentro de `frontend`, gere os arquivos estáticos:
-
-```powershell
-npm.cmd run build
-```
-
-Para conferir esse build localmente, mantenha a API em execução e, dentro de `frontend`, use:
-
-```powershell
-npm.cmd run preview
-```
-
-A pré-visualização abre em **http://localhost:4173** por padrão e encaminha `/api` ao Spring em `8080`. Essa origem está incluída na configuração local apresentada acima.
-
-Dentro de `backend`, gere o executável:
+Em `backend`, gere e execute o JAR:
 
 ```powershell
 .\mvnw.cmd clean package
 java -jar target/rota-api-1.0.0.jar
 ```
 
-Configure as mesmas variáveis de banco e de agente no ambiente do servidor, além de `SESSION_COOKIE_SECURE=true` sob HTTPS. Se o front-end usar outra origem, ajuste `FRONTEND_ORIGIN`, `VITE_API_BASE_URL` e as políticas de cookies de acordo com a topologia. `VITE_API_BASE_URL` recebe a origem da API sem `/api` no final e é incorporada durante o build.
+Publique os arquivos estáticos e a API Java, preferencialmente na mesma origem. Configure as variáveis no servidor e `SESSION_COOKIE_SECURE=true` sob HTTPS. `VITE_API_BASE_URL`, quando preenchida, recebe a origem da API sem `/api` e é incorporada durante o build. Não há URL pública provisionada.
 
 ## Estrutura de pastas
 
 ```text
-backend/
-  .mvn/                       Configuração do Maven Wrapper
-  mvnw / mvnw.cmd             Execução Maven multiplataforma
-  pom.xml                     Spring Boot 4.0.9 e Java 25
-  src/main/java/br/com/rota/
-    config/                   Segurança e configuração
-    controller/               Endpoints Spring MVC
-    dto/                      Contratos de entrada e saída
-    model/                    Entidades e enumerações
-    repository/               Persistência Spring Data JPA
-    service/                  Regras, autorização e transações
-  src/main/resources/
-    db/migration/             Migrações Flyway
-    application.properties    Configuração sem segredos
-  src/test/                   Testes e perfil test
-frontend/
-  public/                     Marca e recursos estáticos
-  src/                        Interface React e cliente da API
-  package.json                Scripts e dependências
-docs/
-  uml/v1/                     Modelagem conceitual inicial
-  uml/v2/                     Modelagem alinhada à implementação
-  uml/v3/                     Revisão atual: contratos, análise e MVC
-  API-CONTRACT.md             Endpoints e dados
-  HISTORIAS-USUARIO.md        Histórias com critérios de aceite
-  MODELAGEM.md                Diagramas e decisões de modelagem
-  REQUISITOS.md               Requisitos e rastreabilidade
-  ROTEIRO-APRESENTACAO.md      Demonstração e checklist de entrega
+backend/         API MVC, entidades, serviços, migrações, testes e Maven Wrapper
+frontend/        Interface React, estilos, recursos locais e testes HTTP e de contraste
+docs/uml/v1/     Modelagem conceitual
+docs/uml/v2/     Primeira implementação
+docs/uml/v3/     Revisão de classes, contratos e dependências
+docs/uml/v4/     Pacotes com temas e Design System
+docs/images/     Capturas da aplicação
+docs/*.md        Requisitos, histórias, API e modelagem
 ```
-
-## Contas de demonstração
-
-As contas abaixo foram preparadas na base Supabase utilizada para a apresentação, com dados fictícios e senha de teste publicada para avaliação do projeto. Os três acessos foram verificados em **4 de novembro de 2026**, após a atualização do banco para a migração V2.
-
-| Papel | Usuário | Senha | O que avaliar |
-| --- | --- | --- | --- |
-| Cliente | `cliente.teste` | `Teste123!` | Consultar e editar cadastro, criar/alterar/cancelar pedidos, acompanhar status e consultar contratos |
-| Empresa | `empresa.teste` | `Teste123!` | Gerenciar a frota, consultar clientes, alterar e avaliar pedidos, executar contratos |
-| Banco | `banco.teste` | `Teste123!` | Avaliar pedidos e executar contratos com crédito concedido pelo próprio banco |
-
-Para entrar:
-
-1. Execute o back-end e o front-end conforme [Instalação e execução](#instalação-e-execução).
-2. Mantenha o back-end conectado ao **mesmo projeto Supabase** em que essas contas foram cadastradas, usando a configuração local de `backend/.env`.
-3. Abra o endereço informado pelo Vite e preencha **Usuário** e **Senha** com uma das combinações da tabela.
-4. Use **Sair da conta** para alternar entre os três papéis durante a avaliação.
-
-As migrações criam a estrutura do banco; **as contas de demonstração foram cadastradas previamente nessa base**. Se outra instalação utilizar um projeto Supabase novo, prepare as contas pelos fluxos de cadastro descritos em [Primeiro uso](#primeiro-uso). O código privado de agentes é solicitado ao cadastrar empresa/banco; entrar em uma conta existente usa apenas usuário e senha.
-
-As credenciais do banco e o código de agentes permanecem na configuração privada do servidor. Somente os acessos de aplicação destinados à demonstração estão publicados nesta seção.
 
 ## Demonstração
 
-Siga o [roteiro de apresentação](docs/ROTEIRO-APRESENTACAO.md) para demonstrar cadastro, pedido, avaliação, contrato e crédito com contas de diferentes papéis. A interface apresenta os dados persistidos no projeto Supabase utilizado; novos bancos começam sem contas ou automóveis.
+O cliente de teste possui quatro pedidos identificados como **“Demonstração para o professor”**: contratado em 10–13/11/2026, em análise em 17–20/11, aprovado em 24–27/11 e cancelado em 1–3/12. O contrato do Fiat Argo 2025 tem crédito de R$ 450,00, taxa de 1,5% e três parcelas. Os estados foram preparados em 3 de novembro e reconferidos em 4 de novembro; as ações de uso alteram esses registros.
 
-Use os [logins de demonstração](#contas-de-demonstração) para acompanhar os fluxos com cada papel. As migrações não criam usuários; as contas para apresentação são preparadas pelos próprios fluxos de cadastro, com dados de teste.
+A frota de demonstração possui **oito automóveis**: Argo (R$ 150/dia), Polo (R$ 190), Onix (R$ 170), Corolla (R$ 280), Renegade (R$ 320), Creta (R$ 350), Civic (R$ 390) e Toro (R$ 360).
 
-### Cenários preparados para avaliação
+As 15 capturas foram atualizadas em **4 de novembro de 2026**, com React, API Java e PostgreSQL real no Supabase. Clique para ampliar.
 
-Na base de apresentação, o cliente `cliente.teste` possui quatro pedidos identificados como **“Demonstração para o professor”**. O automóvel é um **Fiat Argo 2025**, com diária de **R$ 150,00**, matrícula `TESTE-001` e placa `TST1A23`.
+<details>
+<summary>Ver telas da aplicação</summary>
 
-| Período de aluguel | Estado preparado | Fluxo disponível |
+| Login | Cadastro |
+| --- | --- |
+| <a href="docs/images/login.png"><img src="docs/images/login.png" alt="Login com usuário e senha" width="430"></a> | <a href="docs/images/cadastro.png"><img src="docs/images/cadastro.png" alt="Cadastro com identificação e rendimentos" width="430"></a> |
+| [Abrir login](docs/images/login.png) | [Abrir cadastro](docs/images/cadastro.png) |
+
+| Painel do cliente | Frota |
+| --- | --- |
+| <a href="docs/images/dashboard.png"><img src="docs/images/dashboard.png" alt="Resumo de pedidos e contratos" width="430"></a> | <a href="docs/images/frota.png"><img src="docs/images/frota.png" alt="Automóveis disponíveis e suas diárias" width="430"></a> |
+| [Abrir painel](docs/images/dashboard.png) | [Abrir frota](docs/images/frota.png) |
+
+| Pedidos | Novo pedido |
+| --- | --- |
+| <a href="docs/images/pedidos.png"><img src="docs/images/pedidos.png" alt="Pedidos e estados de análise e contratação" width="430"></a> | <a href="docs/images/novo-pedido.png"><img src="docs/images/novo-pedido.png" alt="Escolha de automóvel e período" width="430"></a> |
+| [Abrir pedidos](docs/images/pedidos.png) | [Abrir formulário](docs/images/novo-pedido.png) |
+
+| Avaliação financeira | Clientes |
+| --- | --- |
+| <a href="docs/images/avaliacao.png"><img src="docs/images/avaliacao.png" alt="Dados financeiros e parecer do agente" width="430"></a> | <a href="docs/images/clientes.png"><img src="docs/images/clientes.png" alt="Consulta de clientes pelos agentes" width="430"></a> |
+| [Abrir avaliação](docs/images/avaliacao.png) | [Abrir clientes](docs/images/clientes.png) |
+
+| Cadastro do cliente | Contratos |
+| --- | --- |
+| <a href="docs/images/perfil.png"><img src="docs/images/perfil.png" alt="Dados pessoais e vínculos de renda" width="430"></a> | <a href="docs/images/contratos.png"><img src="docs/images/contratos.png" alt="Lista de contratos formalizados" width="430"></a> |
+| [Abrir cadastro](docs/images/perfil.png) | [Abrir contratos](docs/images/contratos.png) |
+
+| Contrato com crédito | Celular |
+| --- | --- |
+| <a href="docs/images/contrato.png"><img src="docs/images/contrato.png" alt="Propriedade e condições do crédito bancário" width="430"></a> | <a href="docs/images/mobile.png"><img src="docs/images/mobile.png" alt="Interface em tela de 320 pixels" width="220"></a> |
+| [Abrir contrato](docs/images/contrato.png) | [Abrir versão móvel](docs/images/mobile.png) |
+
+| Design System claro | Design System escuro | Frota no tema escuro |
 | --- | --- | --- |
-| 10 a 13/11/2026 | Contratado | Consultar contrato com crédito de R$ 450,00, taxa de 1,5% e três parcelas, concedido pelo banco de demonstração |
-| 17 a 20/11/2026 | Em análise | Cliente ou agente pode editar; agente pode emitir o parecer financeiro |
-| 24 a 27/11/2026 | Aprovado | Agente pode executar o contrato; editar o pedido exige nova análise |
-| 1 a 3/12/2026 | Cancelado | Consultar o histórico de cancelamento |
+| <a href="docs/images/design-system.png"><img src="docs/images/design-system.png" alt="Design System com paleta, fontes e componentes no tema claro" width="280"></a> | <a href="docs/images/design-system-dark.png"><img src="docs/images/design-system-dark.png" alt="Design System no tema escuro" width="280"></a> | <a href="docs/images/frota-dark.png"><img src="docs/images/frota-dark.png" alt="Frota de oito automóveis no tema escuro" width="280"></a> |
+| [Abrir guia claro](docs/images/design-system.png) | [Abrir guia escuro](docs/images/design-system-dark.png) | [Abrir frota escura](docs/images/frota-dark.png) |
 
-Os estados acima foram preparados em **3 de novembro de 2026** e reconferidos sem alterações em **4 de novembro de 2026**. As ações realizadas durante a avaliação alteram esses registros.
-
-### Galeria da aplicação
-
-As **12 capturas**, atualizadas em **4 de novembro de 2026**, mostram a aplicação em execução normal: React, API Java e **PostgreSQL real no Supabase**, já com a migração V2, usando dados fictícios cadastrados pelos fluxos da aplicação. Clique em qualquer imagem ou em **Abrir imagem** para visualizar a captura completa.
-
-| Login | Cadastro de cliente |
-| --- | --- |
-| <a href="docs/images/login.png"><img src="docs/images/login.png" alt="Tela de login com os campos de usuário e senha" width="430"></a> | <a href="docs/images/cadastro.png"><img src="docs/images/cadastro.png" alt="Formulário de cadastro com identificação e rendimentos do cliente" width="430"></a> |
-| Acesso com usuário e senha para os três papéis. [Abrir imagem](docs/images/login.png) | Identificação, profissão e vínculos empregatícios. [Abrir imagem](docs/images/cadastro.png) |
-
-| Painel do cliente | Frota de automóveis |
-| --- | --- |
-| <a href="docs/images/dashboard.png"><img src="docs/images/dashboard.png" alt="Painel do cliente com resumo dos pedidos e contratos" width="430"></a> | <a href="docs/images/frota.png"><img src="docs/images/frota.png" alt="Frota com automóvel, diária, matrícula e placa" width="430"></a> |
-| Resumo dos pedidos, status e contratos do cliente. [Abrir imagem](docs/images/dashboard.png) | Consulta de automóveis e acesso à solicitação de aluguel. [Abrir imagem](docs/images/frota.png) |
-
-| Pedidos de aluguel | Novo pedido |
-| --- | --- |
-| <a href="docs/images/pedidos.png"><img src="docs/images/pedidos.png" alt="Lista de pedidos com os estados contratado, em análise, aprovado e cancelado" width="430"></a> | <a href="docs/images/novo-pedido.png"><img src="docs/images/novo-pedido.png" alt="Formulário para escolher automóvel e período de aluguel" width="430"></a> |
-| Acompanhamento dos períodos e estados das solicitações. [Abrir imagem](docs/images/pedidos.png) | Escolha do automóvel, datas, observações e estimativa de valor. [Abrir imagem](docs/images/novo-pedido.png) |
-
-| Avaliação financeira | Clientes do sistema |
-| --- | --- |
-| <a href="docs/images/avaliacao.png"><img src="docs/images/avaliacao.png" alt="Formulário do agente para aprovar ou rejeitar pedido e registrar justificativa" width="430"></a> | <a href="docs/images/clientes.png"><img src="docs/images/clientes.png" alt="Lista de clientes disponível aos agentes com documentos, profissão e renda" width="430"></a> |
-| Parecer do agente com aprovação ou rejeição e justificativa. [Abrir imagem](docs/images/avaliacao.png) | Consulta e edição dos dados usados na análise. [Abrir imagem](docs/images/clientes.png) |
-
-| Cadastro do cliente | Contratos de aluguel |
-| --- | --- |
-| <a href="docs/images/perfil.png"><img src="docs/images/perfil.png" alt="Perfil do cliente com dados pessoais e rendimentos cadastrados" width="430"></a> | <a href="docs/images/contratos.png"><img src="docs/images/contratos.png" alt="Listagem dos contratos de aluguel formalizados" width="430"></a> |
-| Dados pessoais, vínculos e ações de manutenção do cadastro. [Abrir imagem](docs/images/perfil.png) | Consulta dos aluguéis formalizados após aprovação. [Abrir imagem](docs/images/contratos.png) |
-
-| Detalhes do contrato com crédito | Interface em celular |
-| --- | --- |
-| <a href="docs/images/contrato.png"><img src="docs/images/contrato.png" alt="Contrato com proprietário, banco concedente, valor do crédito, taxa e parcelas" width="430"></a> | <a href="docs/images/mobile.png"><img src="docs/images/mobile.png" alt="Painel do cliente adaptado a uma tela de 320 pixels" width="220"></a> |
-| Propriedade registrada e condições do crédito concedido pelo banco. [Abrir imagem](docs/images/contrato.png) | Navegação e conteúdo adaptados à largura de 320 px. [Abrir imagem](docs/images/mobile.png) |
+</details>
 
 ## Testes
 
-No diretório `backend`:
+Em `backend`, execute `.\mvnw.cmd test`. Em `frontend`, execute `npm.cmd test` e `npm.cmd run build`.
 
-```powershell
-.\mvnw.cmd test
-```
-
-O perfil `test` usa H2 isolado em modo PostgreSQL, aplica as migrações Flyway e valida as entidades, sem requerer credenciais do Supabase. Os relatórios da execução concluída em **3 de novembro de 2026, às 23h55 (horário de Brasília)**, com JDK 25, registram **30 testes, zero falhas e zero erros**:
-
-| Suíte | Quantidade | Comportamentos verificados |
+| Suíte | Testes | Escopo |
 | --- | --- | --- |
-| `RentalFlowTest` | 16 | Cadastro, perfis, ambos os tipos de agente, pedidos, pareceres, cancelamento, propriedade, crédito, condições preservadas e encerramento do aluguel |
-| `HttpSecurityTest` | 11 | API HTTP, sessão/CSRF, login/logout, convites, validação, isolamento, reutilização de nome de usuário, limites de dados e respostas HTTP |
-| `ConcurrentRentalTest` | 2 | Contratações simultâneas do mesmo veículo e concorrência entre exclusão do cliente e criação de pedido |
-| `ContractMigrationTest` | 1 | Atualização V1 → V2 com contratos existentes, preenchimento das condições e rejeição de crédito incompleto |
+| `RentalFlowTest` | 16 | Cadastros, pedidos, agentes, contratos e condições preservadas |
+| `HttpSecurityTest` | 11 | Sessão, CSRF, autorização, validação e respostas HTTP |
+| `ConcurrentRentalTest` | 2 | Dupla contratação e exclusão/criação concorrentes |
+| `ContractMigrationTest` | 1 | Evolução V1 → V2 com contratos existentes |
+| `frontend/test/api.test.js` | 10 | Cookies, CSRF, 401, cancelamento, erros, 204 e JSON |
+| `frontend/test/design-utils.test.js` | 3 | Cálculo de contraste e validação de cores |
 
-Além da suíte em H2, a API foi exercitada em **PostgreSQL 17 real no Supabase**, usando um esquema temporário isolado. A aplicação das migrações V1/V2 e a validação das entidades pelo Hibernate foram conferidas antes de **14 grupos de verificação pela API**:
+As seis suítes somam **43 testes aprovados**. O back-end usa JDK 25 e H2 isolado; os testes HTTP do front-end substituem as respostas de rede e os testes de design validam o cálculo de contraste.
 
-| Grupo | Verificação no PostgreSQL/Supabase |
-| --- | --- |
-| 1 | Acesso anônimo bloqueado e proteção CSRF |
-| 2 | Cadastro e autenticação dos três papéis |
-| 3 | CRUD de cliente, até três rendimentos e isolamento entre identidades |
-| 4 | Cadastro, consulta, edição e exclusão de automóveis |
-| 5 | Cálculo do aluguel, edição com nova análise e contratação |
-| 6 | Cancelamento e rejeição de pedidos |
-| 7 | Propriedade de cliente, empresa e banco; crédito concedido pelo próprio banco |
-| 8 | Datas, períodos adjacentes e bloqueio de exclusão com compromisso ativo |
-| 9 | Contrato preservado após alteração de perfil e frota |
-| 10 | Contratações concorrentes: uma resposta 201 e outra 409 para o período disputado |
-| 11 | Sessão antiga sem acesso a uma nova conta que reutiliza o nome de usuário |
-| 12 | Concorrência entre exclusão de cliente e criação de pedido |
-| 13 | Respostas 404, 405 e 415 para rota, método e formato inválidos |
-| 14 | Logout e encerramento do acesso |
+A integração com PostgreSQL/Supabase foi conferida nos fluxos de CRUD, autenticação, propriedade/crédito, datas, concorrência e preservação de contratos. A atualização V2 também foi validada com contratos e contas preexistentes.
 
-A migração V2 também foi aplicada à base Supabase de apresentação em **4 de novembro de 2026**, com dados preexistentes. A comparação das respostas JSON antes e depois confirmou a preservação dos mesmos IDs e conteúdos dos **quatro pedidos, um contrato, um automóvel e três contas de demonstração**. Os três logins foram novamente validados após a atualização. O acesso pelo build em **http://localhost:4173** também foi conferido com login real, proxy da API e CORS.
-
-No diretório `frontend`:
-
-```powershell
-npm.cmd test
-npm.cmd run build
-```
-
-Os **10 testes do cliente HTTP**, executados pelo Node.js em [api.test.js](frontend/test/api.test.js), foram aprovados na revisão de **4 de novembro de 2026**. Eles verificam cookies de sessão, renovação de CSRF, respostas 401, cancelamento de requisições obsoletas, erros associados aos campos, falha de rede, resposta 204 e rejeição de uma página HTML recebida no lugar de JSON. Esses testes substituem as respostas de rede para exercitar o cliente HTTP em isolamento.
-
-O build da interface também foi concluído. O [roteiro de apresentação](docs/ROTEIRO-APRESENTACAO.md) lista os cenários para demonstração e repetição manual na base de apresentação.
-
-A verificação em Chromium também confirmou cadastro de banco e cliente, cadastro de automóvel, criação e edição de pedido, cancelamento, parecer financeiro e execução de contrato com crédito, usando a API real em ambiente isolado de testes. As cinco páginas do cliente foram verificadas em larguras de **320, 425, 768 e 1440 px**, sem rolagem horizontal no documento e sem erros JavaScript. Tabelas extensas mantêm rolagem dentro do próprio componente.
-
-Na revisão de **3–4 de novembro de 2026**, a interface também passou por **104 verificações no navegador**, cobrindo os três perfis e quatro larguras, e cinco cenários de falha controlada para sessão expirada, validação, requisições obsoletas e foco. Os textos críticos medidos apresentaram contraste mínimo de **4,55:1**; essa medição corresponde aos elementos examinados na revisão.
-
-Uma verificação adicional da interface conectada ao PostgreSQL real cobriu **cinco grupos**, com chamadas efetivas à API:
-
-- Resumo financeiro com três rendimentos e soma mensal de R$ 6.300,00.
-- Perfil de cliente sem acesso ao resumo financeiro de outras pessoas.
-- Cinco páginas do cliente em quatro larguras de tela.
-- Menu móvel com navegação por Tab, conteúdo externo inativo, contenção de foco e fechamento por Escape.
-- Sessão encerrada fora da interface, seguida de limpeza dos dados e retorno ao login.
-
-Esses grupos verificaram a integração com a API. Os cinco cenários de falha controlada mencionados acima utilizaram interceptações de respostas no navegador.
+Na interface, foram conferidos os três perfis nos temas claro/escuro, em celular e desktop, com teclado, foco, persistência do tema e expiração de sessão. A página `/design` foi verificada nas duas aparências, incluindo contrastes, componentes e exportação.
 
 ## Documentações utilizadas
 
-- [Spring Boot 4.0 — documentação oficial](https://docs.spring.io/spring-boot/4.0/index.html)
-- [Spring Framework — Spring MVC](https://docs.spring.io/spring-framework/reference/web/webmvc.html)
-- [Spring Security — proteção CSRF](https://docs.spring.io/spring-security/reference/servlet/exploits/csrf.html)
-- [Supabase — Spring Boot e PostgreSQL](https://supabase.com/docs/guides/getting-started/quickstarts/spring-boot)
-- [Supabase — conexões PostgreSQL](https://supabase.com/docs/guides/database/connecting-to-postgres)
-- [React](https://react.dev/learn)
-- [Vite](https://vite.dev/guide/)
-- [Apache Maven Wrapper](https://maven.apache.org/wrapper/)
-- [PlantUML](https://plantuml.com/)
-- [Template de README da disciplina](https://github.com/joaopauloaramuni/desenvolvimento-e-integracao-de-aplicacoes-web/blob/main/TEMPLATES/template_README.md)
+[Spring Boot](https://docs.spring.io/spring-boot/4.0/index.html) · [Spring MVC](https://docs.spring.io/spring-framework/reference/web/webmvc.html) · [Supabase/PostgreSQL](https://supabase.com/docs/guides/getting-started/quickstarts/spring-boot) · [React](https://react.dev/learn) · [Vite](https://vite.dev/guide/) · [PlantUML](https://plantuml.com/) · [Template da disciplina](https://github.com/joaopauloaramuni/desenvolvimento-e-integracao-de-aplicacoes-web/blob/main/TEMPLATES/template_README.md)
 
 ## Autores
 
-**Álvaro Barbosa** — [GitHub: barskosa](https://github.com/barskosa).
+**Álvaro Barbosa** — [barskosa no GitHub](https://github.com/barskosa).
 
 ## Contribuição
 
-Consulte os requisitos e modelos antes de alterar comportamentos. Trabalhe em uma branch, valide o back-end e o build do front-end e atualize os diagramas quando houver mudança estrutural. As versões anteriores dos modelos devem ser preservadas; mudanças discutidas em aula devem ser registradas com a data e o motivo reais.
+Consulte os requisitos antes de alterar comportamentos. Execute os testes e o build, atualize a documentação afetada e preserve as versões anteriores dos modelos UML.
 
 ## Agradecimentos
 
-Ao professor João Paulo Carneiro Aramuni, pelo enunciado e pelo template de documentação, e ao curso de Engenharia de Software, pelo contexto acadêmico do projeto.
+Ao professor João Paulo Carneiro Aramuni, pelo enunciado, pelas orientações da disciplina e pelo template de documentação.
 
 ## Licença
 
-Não foi definida uma licença de distribuição. A ausência de licença não equivale a uma autorização de uso irrestrito; os responsáveis devem decidir a licença antes de eventual distribuição pública como projeto reutilizável.
+Licença de distribuição ainda não definida.

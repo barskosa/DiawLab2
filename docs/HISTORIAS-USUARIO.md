@@ -105,7 +105,7 @@ Critérios de aceite:
 3. O servidor registra o responsável pela análise e o status `APPROVED` ou `REJECTED`.
 4. Um cliente não emite parecer, mesmo chamando a API diretamente.
 5. O agente pode modificar pedido pendente/aprovado; a modificação exige nova análise, conforme HU05.
-6. A avaliação é um parecer registrado pelo agente; o sistema não afirma realizar análise automática de crédito ou consulta a bureaus externos.
+6. O agente decide o parecer com base nos dados apresentados e registra sua justificativa.
 
 ## HU08 — Executar contrato e registrar propriedade
 
@@ -145,4 +145,16 @@ Critérios de aceite:
 3. O valor é positivo e não supera o valor do contrato; taxa não negativa; quantidade de parcelas positiva.
 4. O contrato apresenta banco, valor, taxa e parcelas quando há crédito.
 5. Sem crédito, esses dados ficam ausentes.
-6. O protótipo registra as condições do crédito; não executa cobrança, pagamento ou simulação de amortização.
+
+## HU11 — Consultar a identidade visual e alternar temas
+
+**Como usuário da aplicação**, quero consultar a referência visual e escolher o tema para navegar com uma apresentação consistente.
+
+Critérios de aceite:
+
+1. A rota `/design` pode ser aberta sem login e não apresenta dados de clientes, pedidos ou contratos.
+2. A página reúne identidade, cores e escalas, tipografia, espaçamentos, bordas, ícones, componentes e acessibilidade.
+3. O tema claro/escuro é compartilhado entre a aplicação e o guia; a escolha persiste após recarregar a página e acompanha as outras abas.
+4. As fontes Rajdhani e Inter são carregadas localmente, com as respectivas licenças preservadas.
+5. O guia pode ser baixado em PDF; a opção de impressão exporta a página no tema selecionado.
+6. Controles têm nomes acessíveis, foco visível e operação por teclado; as amostras de cor apresentam sua relação de contraste.

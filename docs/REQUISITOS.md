@@ -30,15 +30,16 @@ Nos caminhos abaixo, `java/` significa `backend/src/main/java/br/com/rota/`.
 | RNF03 | Apache Maven | `backend/pom.xml`, Maven Wrapper |
 | RNF04 | React + Vite | `frontend/package.json`, `frontend/src/` |
 | RNF05 | Supabase (PostgreSQL) | Configuração JDBC em `backend/src/main/resources/application.properties`; execução normal exige credenciais PostgreSQL |
-| RNF06 | Arquitetura MVC | React como View; controllers Spring; entidades, serviços e repositórios no Model; [diagrama de pacotes atual](uml/v3/pacotes.puml) |
+| RNF06 | Arquitetura MVC | React como View; controllers Spring; entidades, serviços e repositórios no Model; [diagrama de pacotes atual](uml/v4/pacotes.puml) |
 | DOC01 | Diagrama de casos de uso | Versões `v1`, `v2` e [v3 atual](uml/v3/casos-de-uso.puml), com fontes e SVGs |
 | DOC02 | Histórias de usuário | [Histórias e critérios de aceite](HISTORIAS-USUARIO.md) |
 | DOC03 | Diagrama de classes | Versões `v1`, `v2` e [v3 atual](uml/v3/classes.puml), incluindo as condições preservadas do contrato |
-| DOC04 | Diagrama de pacotes / visão lógica | Versões `v1`, `v2` e [v3 atual](uml/v3/pacotes.puml), com dependências da interface e serviços Java |
-| DOC05 | Comparar modelos iniciais e implementação e preservar versões | [Modelagem](MODELAGEM.md), diretórios `v1`, `v2` e `v3`; revisão técnica de 3–4 de novembro de 2026 |
+| DOC04 | Diagrama de pacotes / visão lógica | Versões `v1`, `v2`, `v3` e [v4 atual](uml/v4/pacotes.puml), com interface, temas, Design System e serviços Java |
+| DOC05 | Comparar modelos iniciais e implementação e preservar versões | [Modelagem](MODELAGEM.md), diretórios `v1` a `v4`, preservando a evolução de cada modelo |
 | DOC06 | README adaptado ao template da disciplina | `README.md` com as seções pertinentes ao projeto |
 | DOC07 | GitHub atualizado com modelos e código final | Código, fontes UML, diagramas SVG e documentação versionados no [repositório do projeto](https://github.com/barskosa/DiawLab2) |
-| DOC08 | Revisar modelos conforme feedback em aula | Estrutura versionada preparada; nenhum feedback de aula foi fornecido nesta implementação |
+| DOC08 | Manter e revisar os modelos conforme alterações e orientações da disciplina | [Processo de atualização dos modelos](MODELAGEM.md#manutenção-dos-modelos) com preservação das versões anteriores |
+| DOC09 | Design System conforme orientação da disciplina | Página pública `/design`, [referência visual](design-system.md) e [PDF](../frontend/public/design-system-rota.pdf): paleta e escalas, tipografia, espaçamentos, bordas, marca, temas, componentes, acessibilidade e exportação — HU11 |
 
 ## Verificação dos requisitos no código de testes
 

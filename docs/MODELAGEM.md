@@ -1,8 +1,8 @@
 # Modelagem do sistema
 
-O enunciado solicita casos de uso, histórias de usuário, classes, pacotes e revisão dos modelos em relação ao software. Este diretório preserva três versões: conceitual (`v1`), implementação inicial (`v2`) e revisão técnica de **3–4 de novembro de 2026** (`v3`), correspondente ao código atual.
+O sistema mantém a evolução dos modelos: conceito (`v1`), implementação inicial (`v2`), revisão dos pedidos e contratos (`v3`) e integração dos temas e do Design System (`v4`). As classes de domínio e os casos de uso de negócio permanecem na `v3`; a visão de pacotes atual está na `v4`.
 
-As versões `v1` e `v2` foram elaboradas durante a implementação inicial. A `v3` registra mudanças observadas na auditoria do próprio código, incluindo a preservação das condições contratuais e a apresentação dos rendimentos na análise financeira. Não havia modelos anteriores ou feedback de aula no checkout inicial; nenhuma dessas revisões é atribuída a uma aprovação ou orientação histórica do professor.
+As versões `v1` e `v2` apresentam o conceito e a primeira implementação. A `v3` incorpora a preservação das condições contratuais e a consulta de rendimentos na análise financeira. A `v4` acrescenta o guia visual público e o compartilhamento do tema na interface. Cada versão mantém suas fontes e diagramas para comparação.
 
 ## Versão 1 — modelo conceitual
 
@@ -28,7 +28,7 @@ O modelo inicial descreve o domínio do enunciado antes de escolher os detalhes 
 
 ## Versão 2 — modelo da implementação
 
-Esta versão registra a primeira implementação em `backend/src/main/java/br/com/rota` e `frontend/src`. Suas fontes e SVGs permanecem preservados. Para os campos e as dependências do código atual, consulte a **versão 3** abaixo.
+Esta versão registra a primeira implementação em `backend/src/main/java/br/com/rota` e `frontend/src`. Suas fontes e SVGs permanecem preservados. Os campos atuais estão na **versão 3**, e as dependências atuais na **versão 4**.
 
 | Modelo | Fonte editável | Visualização |
 | --- | --- | --- |
@@ -89,7 +89,7 @@ Esta revisão, de **3–4 de novembro de 2026**, acompanha mudanças efetivas no
 | --- | --- | --- |
 | Casos de uso revisados | [casos-de-uso.puml](uml/v3/casos-de-uso.puml) | [SVG](uml/v3/casos-de-uso.svg) |
 | Classes atuais | [classes.puml](uml/v3/classes.puml) | [SVG](uml/v3/classes.svg) |
-| Pacotes e MVC atuais | [pacotes.puml](uml/v3/pacotes.puml) | [SVG](uml/v3/pacotes.svg) |
+| Pacotes e MVC da versão 3 | [pacotes.puml](uml/v3/pacotes.puml) | [SVG](uml/v3/pacotes.svg) |
 
 ### Casos de uso revisados
 
@@ -107,7 +107,7 @@ A migração `V2__immutable_contract_terms.sql` adiciona os campos sem substitui
 
 A exclusão de cliente desativa a identidade e anonimiza o **cadastro**. Os nomes preservados em contratos continuam no histórico contratual. Essa distinção evita afirmar que a exclusão apaga a identificação de documentos já emitidos.
 
-### Pacotes e dependências atuais
+### Pacotes e dependências da versão 3
 
 ![Pacotes v3](uml/v3/pacotes.svg)
 
@@ -120,9 +120,23 @@ O diagrama inclui `Auth.jsx`, `ClientFinancialSummary.jsx` e `RentalDates`. As c
 | Exclusão do cliente e criação de pedido precisavam compartilhar a verificação de identidade ativa | Bloqueio do cadastro nas operações que concorrem com sua exclusão | `AuthService.currentForUpdate`, `UserRepository.findLocked`, `RentalService.createOrder` |
 | Agente precisava consultar rendimentos durante o próprio parecer | Resumo financeiro nos detalhes e na avaliação do pedido | `frontend/src/ClientFinancialSummary.jsx`, `App.jsx`, `forms.jsx` |
 | Convenções de disponibilidade, diária mínima e fim do contrato precisavam ser uniformes | Serviço auxiliar `RentalDates` | `service/RentalDates.java`, `AuthService`, `RentalService` |
-| O diagrama anterior simplificava incorretamente as dependências do front-end | `Auth.jsx` e resumo financeiro explícitos; remoção da ligação direta entre componentes/formulários e `api.js` | Importações em `frontend/src/` e [pacotes v3](uml/v3/pacotes.puml) |
+| Dependências da autenticação e da análise financeira na interface | `Auth.jsx` e resumo financeiro explícitos; formulários recebem callbacks e os componentes visuais não acessam diretamente a API | Importações em `frontend/src/` e [pacotes v3](uml/v3/pacotes.puml) |
 
 Nos caminhos Java desta tabela, o prefixo é `backend/src/main/java/br/com/rota/`. A migração fica em `backend/src/main/resources/db/migration/`.
+
+## Versão 4 — temas e Design System
+
+O diagrama de pacotes de **4 de novembro de 2026** inclui a página pública `/design`, os tokens visuais e o tema compartilhado. Os modelos de classes e casos de uso de negócio continuam na `v3`, sem cópias de arquivos inalterados.
+
+| Modelo | Fonte editável | Visualização |
+| --- | --- | --- |
+| Pacotes e MVC atuais | [pacotes.puml](uml/v4/pacotes.puml) | [SVG](uml/v4/pacotes.svg) |
+
+![Pacotes v4](uml/v4/pacotes.svg)
+
+`main.jsx` envolve a aplicação com `ThemeProvider` e seleciona `App` ou `DesignSystem` conforme o caminho. `Theme.jsx` controla a preferência visual; `DesignSystem.jsx` reutiliza os componentes e o cálculo de contraste de `design-utils.js`. O [PDF do guia](../frontend/public/design-system-rota.pdf) é um recurso estático. A referência visual não acessa a API de negócio.
+
+A [documentação do Design System](design-system.md) apresenta paleta, tipografia e escalas. A gestão de clientes, pedidos e contratos mantém os controllers, serviços, entidades e repositórios existentes.
 
 ## Ciclo de vida do pedido
 
@@ -147,14 +161,14 @@ O valor é calculado no servidor. A aprovação registra o parecer, e a contrata
 
 1. Preserve as fontes `.puml` e as versões anteriores.
 2. Ao alterar entidades, associações, permissões ou fluxo, atualize os modelos correspondentes.
-3. Crie `v4`, `v5` etc. quando uma nova revisão significativa precisar ser apresentada.
+3. Crie `v5`, `v6` etc. quando uma nova revisão significativa precisar ser apresentada.
 4. Registre a data, o requisito/feedback real, os arquivos alterados e a justificativa.
 5. Reavalie a [matriz de requisitos](REQUISITOS.md) e as [histórias](HISTORIAS-USUARIO.md) após a mudança.
 
 Os SVGs são artefatos de visualização gerados a partir das fontes PlantUML. Podem ser regenerados com uma instalação do [PlantUML](https://plantuml.com/):
 
 ```powershell
-java -jar CAMINHO_DO_PLANTUML.jar -tsvg -charset UTF-8 docs/uml/v1/*.puml docs/uml/v2/*.puml docs/uml/v3/*.puml
+java -jar CAMINHO_DO_PLANTUML.jar -tsvg -charset UTF-8 docs/uml/v1/*.puml docs/uml/v2/*.puml docs/uml/v3/*.puml docs/uml/v4/*.puml
 ```
 
 As fontes declaram `!pragma layout smetana` para renderização pelo mecanismo Java. PlantUML é uma ferramenta de documentação e não é dependência da aplicação.

@@ -421,6 +421,7 @@
 }
 .ds-wheel-marker {
   position: absolute;
+  transform: translate(-50%, -50%);
   width: 18px;
   height: 18px;
   border: 3px solid var(--color-surface);
@@ -429,13 +430,13 @@
 }
 .marker-green {
   background: #246b4f;
-  left: 22px;
-  top: 107px;
+  left: 60.35%;
+  top: 88.64%;
 }
 .marker-blue {
   background: #14333e;
-  left: 2px;
-  top: 67px;
+  left: 27.06%;
+  top: 82.77%;
 }
 .ds-harmony h3 {
   font-size: 23px;
@@ -1125,14 +1126,6 @@
   .ds-wheel-center {
     inset: 22px;
   }
-  .marker-green {
-    top: 77px;
-    left: 15px;
-  }
-  .marker-blue {
-    top: 45px;
-    left: -1px;
-  }
   .ds-harmony p {
     font-size: 11px;
   }
@@ -1251,14 +1244,6 @@
   .ds-color-wheel {
     width: 100px;
     height: 100px;
-  }
-  .marker-green {
-    top: 68px;
-    left: 12px;
-  }
-  .marker-blue {
-    top: 37px;
-    left: -1px;
   }
   .ds-harmony h3 {
     font-size: 21px;
@@ -1419,14 +1404,6 @@
   }
   .ds-wheel-center {
     inset: 22px;
-  }
-  .marker-green {
-    top: 77px;
-    left: 15px;
-  }
-  .marker-blue {
-    top: 45px;
-    left: -1px;
   }
   .ds-color-scale span {
     font-size: 8px;
