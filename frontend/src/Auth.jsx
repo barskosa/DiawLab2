@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { api } from "./api.js";
+import { ThemeToggle } from "./Theme.jsx";
 import {
   CarArt,
   ErrorMessage,
@@ -231,6 +232,13 @@ export default function Auth({ onAuthenticated, connectionError }) {
           <div className="auth-security">
             <Icon name="shield" size={17} />
             <span>Acesso exclusivo para usuários cadastrados.</span>
+          </div>
+          <div className="auth-tools">
+            <a href="/design">
+              <Icon name="palette" size={16} />
+              Design system
+            </a>
+            <ThemeToggle />
           </div>
         </div>
       </section>

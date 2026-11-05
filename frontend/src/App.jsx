@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Auth from "./Auth.jsx";
+import { ThemeToggle } from "./Theme.jsx";
 import { api } from "./api.js";
 import {
   CarArt,
@@ -155,7 +156,9 @@ export default function App() {
       ? page
       : "dashboard";
   useEffect(() => {
-    document.title = `${titles[activePage][0]} | Rota`;
+    document.title = user
+      ? `${titles[activePage][0]} | Rota`
+      : "Rota — Acesse sua conta";
     document.getElementById("main-content")?.focus({ preventScroll: true });
     window.scrollTo(0, 0);
   }, [activePage, user?.id]);
@@ -313,6 +316,11 @@ export default function App() {
                 )}
             </a>
           ))}
+          <a href="/design" className="nav-design">
+            <Icon name="palette" />
+            <span>Design system</span>
+            <Icon name="arrow" size={15} />
+          </a>
         </nav>
         <div className="sidebar-bottom">
           <div className="sidebar-note">
@@ -360,10 +368,13 @@ export default function App() {
               <Icon name="menu" />
             </button>
             <span className="breadcrumb">
-              Meu espaço <span>/</span> <strong>{titles[activePage][0]}</strong>
+              <span className="breadcrumb-root">Meu espaço</span>
+              <span className="breadcrumb-separator">/</span>{" "}
+              <strong>{titles[activePage][0]}</strong>
             </span>
           </div>
           <div className="topbar-right">
+            <ThemeToggle compact />
             <span className="workspace-badge">
               <span className="live-dot" />
               {roleLabel(user.role)}

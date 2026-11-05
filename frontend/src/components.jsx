@@ -115,6 +115,22 @@ const paths = {
       <path d="M4 22V3h16v19M2 22h20M8 7h2m4 0h2M8 11h2m4 0h2M8 15h2m4 0h2M10 22v-3h4v3" />
     </>
   ),
+  sun: (
+    <>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.4 1.4m11.2 11.2L19 19M5 19l1.4-1.4M17.6 6.4 19 5" />
+    </>
+  ),
+  moon: <path d="M20.5 14A8.5 8.5 0 0 1 10 3.5 8.7 8.7 0 1 0 20.5 14Z" />,
+  palette: (
+    <>
+      <path d="M12 3a9 9 0 1 0 0 18h1.5a2 2 0 0 0 1.4-3.4 1.5 1.5 0 0 1 1.1-2.6h2a3 3 0 0 0 3-3 9 9 0 0 0-9-9Z" />
+      <circle cx="7.5" cy="10" r=".6" />
+      <circle cx="11" cy="7" r=".6" />
+      <circle cx="15.5" cy="8" r=".6" />
+      <circle cx="6.5" cy="14" r=".6" />
+    </>
+  ),
 };
 export function Icon({ name, size = 20, ...props }) {
   return (
@@ -142,7 +158,10 @@ export function Logo({ light = false }) {
         <path
           d="M12 28V12h10c9 0 10 12 0 12h-3l8 8M12 20h10"
           fill="none"
-          stroke={light ? "#17343e" : "#d2edcc"}
+          className="logo-symbol-stroke"
+          stroke={
+            light ? "var(--color-sidebar-bg)" : "var(--color-logo-cutout)"
+          }
           strokeWidth="4"
           strokeLinecap="round"
           strokeLinejoin="round"

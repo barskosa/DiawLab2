@@ -5,6 +5,34 @@
     <link rel="icon" type="image/svg+xml" href="/rota.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#122c36" />
+    <script>
+      (function () {
+        var theme;
+        try {
+          theme = localStorage.getItem("rota.theme");
+        } catch (error) {}
+        if (theme !== "light" && theme !== "dark")
+          theme = window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+      })();
+    </script>
+    <link
+      rel="preload"
+      href="/fonts/Inter-Variable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/Rajdhani-Bold.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
     <meta
       name="description"
       content="Rota: gestão de aluguel de automóveis, pedidos e contratos em um só lugar."
